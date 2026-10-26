@@ -6,7 +6,7 @@ escaneados (fotocopias en blanco y negro con sellos "cotejado contra original", 
 una INE o una licencia en el mismo PDF) y devuelve un JSON con **confianza por campo** y **validaciones**.
 
 Todo corre local y open source: **PaddleOCR** + **Qwen3-VL 8B** (Ollama). Es la misma arquitectura que
-`OCR-INE-Santander` y `passport-ocr-api`, cambiando el ancla: aquí manda la **MRZ TD1 `I<MEX`** del reverso
+`OCR-INE-OpenSource` y `passport-ocr-api`, cambiando el ancla: aquí manda la **MRZ TD1 `I<MEX`** del reverso
 (ICAO 9303, con dígitos verificadores) y el título "RESIDENTE TEMPORAL / PERMANENTE" del anverso.
 
 ## Cómo funciona
