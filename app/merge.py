@@ -16,6 +16,7 @@ from .front_ocr import FrontOcr
 from .mrz_td1 import MrzResult
 from .schemas import Confianza, DatosFM, Nombre, Validacion
 
+NUE_PLAUSIBLE = re.compile(r"^0{6}\d{7}$")
 CRITICAL_FIELDS = ("nombre", "fecha_nacimiento", "sexo", "curp", "nue", "numero_documento")
 RESIDENTE = ("RESIDENTE TEMPORAL", "RESIDENTE PERMANENTE")
 
@@ -160,13 +161,16 @@ class Merger:
         vlm = re.sub(r"\D", "", self._v("nue") or "")
         ocr = self.of.nue
         cands = [c for c in (vlm, ocr) if c and v.NUE_RE.match(c)]
+        # El NUE impreso es 000000 + 7 dígitos: una lectura que rompe ese patrón (0 leído como 9, dígito
+        # de más) cede ante la que sí lo cumple.
+        cands.sort(key=lambda c: not NUE_PLAUSIBLE.match(c))
         val = cands[0] if cands else (vlm or None)
         self.datos.nue = val
         if vlm and ocr and v.NUE_RE.match(vlm) and v.NUE_RE.match(ocr):
             self._check("nue_vlm_vs_ocr", vlm == ocr, f"{vlm} vs {ocr}")
             self.conf["nue"] = "alta" if vlm == ocr else "baja"
         elif val and v.NUE_RE.match(val):
-            self.conf["nue"] = "media"
+            self.conf["nue"] = "media" if NUE_PLAUSIBLE.match(val) else "baja"
         elif self.datos.tipo_documento in RESIDENTE or val:
             self.conf["nue"] = "baja"
 
@@ -388,6 +392,15 @@ class Merger:
         elif exp:
             self.datos.fecha_expedicion = _iso(exp)
             self.conf["fecha_expedicion"] = "alta" if exp in ocr else "media"
+        else:
+            # Tarjetas permanentes antiguas: la MRZ no trae fecha y el VLM a veces no la lee; el OCR del
+            # anverso suele tener exactamente una fecha que no es nacimiento ni vencimiento.
+            fn = v.parse_date(self.datos.fecha_nacimiento)
+            cands = {d for d in ocr if d and d != fn and d != venc and 2000 <= d.year <= date.today().year}
+            if len(cands) == 1:
+                self.datos.fecha_expedicion = _iso(cands.pop())
+                self.conf["fecha_expedicion"] = "media"
+                self.warnings.append("fecha_expedicion tomada del OCR del anverso (el modelo de visión no la leyó)")
         # Vencimiento: sólo impreso en el anverso (no tiene dígito verificador)
         e = v.parse_date(self.datos.fecha_expedicion)
         if venc and e and venc <= e and (mrz_ok or exp == e):

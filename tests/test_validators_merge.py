@@ -50,3 +50,17 @@ def test_merge_basic():
     assert d.fecha_vencimiento == "2027-01-09" and mg.conf["fecha_vencimiento"] == "alta"
     assert any(c.regla == "fecha_expedicion_vs_mrz" and c.resultado == "ok" for c in mg.checks)
     assert not [f for f in mg.conf if mg.conf[f] == "baja"], mg.conf
+
+
+def test_nue_plausible_y_fecha_expedicion_ocr():
+    """Datos ficticios. Permanente antigua: MRZ sin fecha, el VLM no lee la expedición y el OCR trae
+    nacimiento + una fecha más."""
+    from app.merge import NUE_PLAUSIBLE
+    assert NUE_PLAUSIBLE.match("0000001234567") and not NUE_PLAUSIBLE.match("0000091234567")
+    mrz = mrz_td1.parse(["I<MEX12345678<8<<<<<<<<<<<<<<<", "9003152F<<<<<<0ESP<<<<<<<<<<<6", "PEREZ<LOPEZ<<ANA<MARIA<<<<<<<<"])
+    vf = {"tipo_documento": "RESIDENTE PERMANENTE", "nue": "0000001234567", "nombre_completo": "PEREZ LOPEZ Ana Maria",
+          "nacionalidad": "Española", "pais": "ESP", "sexo": "Mujer", "fecha_nacimiento": "15/03/1990", "curp": "",
+          "fecha_expedicion": "", "fecha_vencimiento": "", "permiso_para_trabajar": False}
+    of = FrontOcr(tipo_documento="RESIDENTE PERMANENTE", nue="0000001234567", fechas=["1990-03-15", "2014-01-31"])
+    d = Merger(vf, None, of, FrontOcr(), mrz).run()
+    assert d.fecha_expedicion == "2014-01-31"
