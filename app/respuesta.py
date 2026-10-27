@@ -8,8 +8,9 @@
   212 = quedaron comprobaciones sin correr · 22x = se evaluó pero no se extrajo.
 """
 
-from . import mrz_td1
+from . import mrz_td1, plan
 from . import validators as v
+from .config import get_settings
 from .schemas import ResultadoFM
 
 ESTADOS = {
@@ -29,6 +30,7 @@ ESTADOS = {
     413: "ARCHIVO_DEMASIADO_GRANDE",
     422: "PETICION_INVALIDA",
     500: "ERROR_INTERNO",
+    502: "ERROR_MODELO_VISION",
     503: "SERVICIO_NO_DISPONIBLE",
 }
 
@@ -49,6 +51,7 @@ MENSAJES = {
     413: "El archivo excede el tamaño máximo permitido.",
     422: "La petición no es válida.",
     500: "Error interno. Repórtalo.",
+    502: "El modelo de visión no respondió o rechazó la petición. Intenta de nuevo.",
     503: "El servicio no está disponible.",
 }
 
@@ -69,12 +72,17 @@ def _clean(d: dict, keep_none: tuple[str, ...] = ()) -> dict:
 
 def datos(r: ResultadoFM) -> dict:
     d = r.datos
+    # Vigencia con la regla del plan de atención (por año o por fecha), igual que la API de DocumentAI
+    vigente, _ = plan.vigencia({"tipo_documento": d.tipo_documento, "fecha_vencimiento": d.fecha_vencimiento},
+                               get_settings().regla_vigencia)
+    if vigente is None:
+        vigente = d.vigente
     return _clean({
         "tipo_documento": d.tipo_documento,
         "nue": d.nue,
         "apellidos": d.nombre.apellidos,
         "nombres": d.nombre.nombres,
-        "nombre_completo": d.nombre.nombre_completo,
+        "nombre_completo": d.nombre.nombre_completo.upper() if d.nombre.nombre_completo else None,
         "nacionalidad": d.nacionalidad,
         "pais": d.pais,
         "sexo": d.sexo,
@@ -83,7 +91,7 @@ def datos(r: ResultadoFM) -> dict:
         "permiso_para_trabajar": d.permiso_para_trabajar,
         "fecha_expedicion": d.fecha_expedicion,
         "fecha_vencimiento": d.fecha_vencimiento,
-        "vigente": d.vigente,
+        "vigente": vigente,
         "numero_documento": d.numero_documento,
         "numero_segob_inm": d.numero_segob_inm,
         "impreso_en": d.impreso_en,
@@ -241,7 +249,8 @@ def construir(r: ResultadoFM) -> dict:
     if r.estado == "rechazado":
         blanco = meta is not None and meta.categoria == "hoja_en_blanco"
         clasif.update(motivo=r.error, documento_detectado=meta.documento_detectado if meta else None)
-        return sobre(221 if blanco else 220, clasificacion=_clean(clasif, keep_none=("categoria", "confianza")))
+        return sobre(221 if blanco else 220, clasificacion=_clean(clasif, keep_none=("categoria", "confianza")),
+                     meta=_meta(r, None))
 
     val = validacion(r)
     avs = avisos(r) + val.pop("_avisos")
@@ -257,18 +266,48 @@ def construir(r: ResultadoFM) -> dict:
         codigo = 211
         avs.append("El documento requiere revisión humana")
 
+    mz = mrz(r)
     return sobre(
         codigo,
         id=r.id,
         datos=datos(r) or None,
-        mrz=mrz(r),
+        mrz=mz,
         validacion=val,
         avisos=avs,
         clasificacion=_clean(clasif, keep_none=("categoria", "confianza")),
         confianza=r.confianza or None,
-        meta=_clean({"tiempo_total_ms": meta.tiempo_total_ms, "tiempos_ms": meta.tiempos_ms,
-                     "modelo_vlm": meta.modelo_vlm, "paginas": meta.paginas,
-                     "pagina_anverso": meta.pagina_anverso, "pagina_reverso": meta.pagina_reverso,
-                     "recorte_anverso": meta.recorte_anverso, "recorte_reverso": meta.recorte_reverso,
-                     "mrz_fuente": meta.mrz_fuente}) if meta else None,
+        meta=_meta(r, mz.get("origen")),
     )
+
+
+def _meta(r: ResultadoFM, mrz_fuente: str | None) -> dict | None:
+    """Mismas llaves que la API de DocumentAI (paginas_forma_migratoria, paginas_ignoradas, motor,
+    version_modelo, mrz_fuente = texto|entidad) más las propias de este motor."""
+    meta = r.meta
+    if meta is None:
+        return None
+    fm = sorted({p for p in (meta.pagina_anverso, meta.pagina_reverso) if p})
+    return _clean({
+        "tiempo_total_ms": meta.tiempo_total_ms,
+        "tiempos_ms": meta.tiempos_ms,
+        "paginas": meta.paginas,
+        "paginas_forma_migratoria": fm or None,
+        "paginas_ignoradas": [p for p in range(1, (meta.paginas or 0) + 1) if p not in fm] or None,
+        "motor": "paddleocr+vlm" if meta.modelo_vlm else "paddleocr",
+        "version_modelo": meta.modelo_vlm,
+        "modelo_vlm": meta.modelo_vlm,
+        "pagina_anverso": meta.pagina_anverso,
+        "pagina_reverso": meta.pagina_reverso,
+        "recorte_anverso": meta.recorte_anverso,
+        "recorte_reverso": meta.recorte_reverso,
+        "mrz_fuente": mrz_fuente,
+    })
+
+
+def con_plan(body: dict, solicitud: plan.Solicitud) -> dict:
+    """Agrega `validacion_plan` (8 preguntas del plan de atención) siempre que se evaluó el documento."""
+    categoria = (body.get("clasificacion") or {}).get("categoria")
+    if categoria:
+        body["validacion_plan"] = plan.evaluar(categoria, body.get("datos"), body.get("mrz"), solicitud,
+                                               get_settings().regla_vigencia)
+    return body

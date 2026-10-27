@@ -48,8 +48,13 @@ confunde con la tarjeta: responde 220 `NO_ES_FORMA_MIGRATORIA`.
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp .env.example .env            # VLM_BASE_URL=http://localhost:11434 con Ollama local; define API_KEY
 .venv/bin/uvicorn app.main:app --port 8000
-curl -X POST localhost:8000/forma-migratoria -H "X-API-Key: <API_KEY>" -F "file=@tarjeta.pdf;type=application/pdf"
+curl -X POST localhost:8000/forma-migratoria -H "X-API-Key: <API_KEY>" -F "file=@tarjeta.pdf;type=application/pdf"      -F "nombre=Maria Fernanda Perez Gomez" -F "curp=PEGM900609MNERMR05" -F "fecha_nacimiento=1990-06-09" -F "nacionalidad=Colombiana"
 ```
+
+Los campos de texto son los **datos capturados en la solicitud** (todos opcionales): `nombre` (o `apellido_paterno`,
+`apellido_materno`, `nombres`), `curp`, `fecha_nacimiento` (AAAA-MM-DD o DD/MM/AAAA) y `nacionalidad` (gentilicio,
+país o código ISO-3). Con ellos la respuesta contesta las validaciones del plan de atención (`validacion_plan`).
+`POST /extract` responde igual (alias para pruebas).
 
 **Lote** (reanudable):
 
@@ -95,13 +100,14 @@ Mismo sobre que las APIs de INE y pasaporte: `codigo` / `estado` / `mensaje` + `
 | 212 | `PROCESADO_INCOMPLETO` (ver `validacion.sin_verificar`) |
 | 220 | `NO_ES_FORMA_MIGRATORIA` · 221 `HOJA_EN_BLANCO` · 222 `ARCHIVO_CORRUPTO` · 223 `PDF_PROTEGIDO` · 224 `LIMITE_PAGINAS` |
 | 400 / 401 / 413 / 422 / 500 | archivo no soportado / sin API key / muy grande / petición inválida / error |
+| 502 | `ERROR_MODELO_VISION` (el VLM no respondió; con `ERROR_VLM_502=false` se responde sólo con OCR) |
 
 ```json
 {
   "codigo": 200, "estado": "PROCESADO", "mensaje": "...",
   "datos": {
     "tipo_documento": "RESIDENTE TEMPORAL", "nue": "0000001234567",
-    "apellidos": "PEREZ LOPEZ", "nombres": "ANA MARIA", "nombre_completo": "PEREZ LOPEZ Ana Maria",
+    "apellidos": "PEREZ LOPEZ", "nombres": "ANA MARIA", "nombre_completo": "PEREZ LOPEZ ANA MARIA",
     "nacionalidad": "ESPAÑOLA", "pais": "ESP", "sexo": "M", "fecha_nacimiento": "1990-03-15",
     "curp": "PELA900315MNERPN00", "permiso_para_trabajar": true,
     "fecha_expedicion": "2025-01-10", "fecha_vencimiento": "2027-01-09", "vigente": true,
@@ -119,9 +125,35 @@ Mismo sobre que las APIs de INE y pasaporte: `codigo` / `estado` / `mensaje` + `
   "clasificacion": {"categoria": "forma_migratoria", "confianza": null, "senales": ["RESIDENTE TEMPORAL", "mrz_td1", "..."],
                     "otros_documentos": ["pasaporte (ESP)"]},
   "confianza": {"nombre": "alta", "curp": "alta", "numero_documento": "alta"},
-  "meta": {"tiempo_total_ms": 9800, "tiempos_ms": {"ocr_y_recorte": 3900, "vlm_anverso": 4700}, "mrz_fuente": "ocr"}
+  "meta": {"tiempo_total_ms": 9800, "tiempos_ms": {"ocr_y_recorte": 3900, "vlm_anverso": 4700}, "paginas": 2,
+           "paginas_forma_migratoria": [1], "paginas_ignoradas": [2], "motor": "paddleocr+vlm",
+           "version_modelo": "qwen3-vl:8b-instruct", "pagina_anverso": 1, "pagina_reverso": 1, "mrz_fuente": "texto"},
+  "validacion_plan": {"cumple": true, "mensaje": "Documento válido: cumple con todas las validaciones.", "motivos_rechazo": [],
+                      "regla_vigencia": "anio", "validaciones": ["... 8 preguntas, ver abajo"]}
 }
 ```
+
+### `validacion_plan`: plan de atención (sección Forma Migratoria)
+
+Siempre que se evaluó el documento (códigos 200-221) la respuesta agrega `validacion_plan`, el mismo bloque que
+responde `OCR-INM-DocumentAI`, con las 8 preguntas del "Plan de atención - Validación documental" en este orden:
+`hoja_en_blanco`, `imagen_ilegible`, `es_forma_migratoria`, `vigente`, `nombre_coincide`, `curp_coincide`,
+`fecha_nacimiento_coincide`, `nacionalidad_coincide`. Cada una responde `SI` / `NO` (`NO_APLICA` cuando la CURP no
+existe en la tarjeta o en la solicitud, no bloquea; `NO_VERIFICADO` cuando falta el dato de la solicitud, bloquea).
+
+```json
+"validacion_plan": {
+  "cumple": false, "mensaje": "Revisar documento y motivo de rechazo",
+  "motivos_rechazo": ["¿La fecha de nacimiento coincide? NO: La fecha de nacimiento no coincide: tarjeta 1990-06-09 vs solicitud 1991-06-09."],
+  "regla_vigencia": "anio",
+  "validaciones": [{"id": "hoja_en_blanco", "pregunta": "¿Es una hoja en blanco?", "resultado": "NO", "ok": true, "detalle": "El documento tiene contenido."}, "..."]
+}
+```
+
+`cumple` sólo es `true` si pasan las 8; si no, `mensaje` es "Revisar documento y motivo de rechazo" y `motivos_rechazo`
+lista las que fallaron. La vigencia se evalúa con `REGLA_VIGENCIA`: `anio` (año de vencimiento >= año actual, como pide
+el plan; también aplica a `datos.vigente`) o `fecha` (vencimiento >= hoy). `codigo` habla de la calidad de la
+extracción y `validacion_plan.cumple` de si el documento coincide con la solicitud: son independientes.
 
 Resultados sobre el lote de pruebas y las opciones evaluadas: [docs/EVALUACION.md](docs/EVALUACION.md).
 

@@ -145,6 +145,11 @@ async def process(files: list[bytes], vlm: VlmClient | None, filename: str | Non
         for name, res in zip(jobs, results):
             if isinstance(res, Exception):
                 log.error("%s falló: %s", name, res)
+                if name == "vlm_anverso" and s.error_vlm_502:
+                    # Igual que la API de DocumentAI cuando falla el motor: 502, sin datos a medias
+                    return ResultadoFM(archivo=filename, estado="error", error=str(res), error_codigo=502,
+                                       advertencias=warnings,
+                                       meta=_meta(s, times, t_start, layout, None, vlm, veredicto.senales, texto))
                 warnings.append(f"El modelo de visión falló en {name.split('_')[1]}; se usó sólo OCR")
                 continue
             data, secs = res

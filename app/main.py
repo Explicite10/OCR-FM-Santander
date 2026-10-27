@@ -2,18 +2,18 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import Body, Depends, FastAPI, File, HTTPException, Query, Request, Security, UploadFile
+from fastapi import Body, Depends, FastAPI, File, Form, HTTPException, Query, Request, Security, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import pipeline
+from . import pipeline, plan
 from .config import get_settings
 from .db import Database, Extraccion
 from .documents import PDF_MAGIC
 from .ocr import engine
-from .respuesta import ESTADOS, MENSAJES, construir, http_status, sobre
+from .respuesta import ESTADOS, MENSAJES, con_plan, construir, http_status, sobre
 from .schemas import ExtraccionDetalle, ExtraccionResumen, ListaExtracciones, Revision
 from .vlm import VlmClient
 
@@ -122,11 +122,16 @@ async def _read(f: UploadFile) -> bytes | JSONResponse:
     return data
 
 
-@app.post("/forma-migratoria", dependencies=[Depends(check_api_key)], response_class=JSONResponse,
-          summary="Extrae los datos de una tarjeta de residente del INM",
-          responses={200: {"description": "Desenlace en `codigo` (200, 210-212, 220-224)"},
-                     **_error_doc(400, 401, 413, 422, 500)})
-async def forma_migratoria(file: UploadFile = File(..., description="PDF con la tarjeta (anverso y reverso)")) -> JSONResponse:
+_D_NOMBRE = ("Nombre completo capturado en la solicitud, en cualquier orden. "
+             "Alternativa: apellido_paterno, apellido_materno y nombres.")
+_D_CURP = "CURP capturada en la solicitud (si existe)."
+_D_FECHA = "Fecha de nacimiento capturada: AAAA-MM-DD (también acepta DD/MM/AAAA)."
+_D_NAC = "Nacionalidad capturada: gentilicio (Colombiana), país (Colombia) o código ISO (COL)."
+_DOC = {200: {"description": "Desenlace en `codigo`: 200, 210-212 (procesado) o 220-224 (no se extrajo)"},
+        **_error_doc(400, 401, 413, 422, 500, 502)}
+
+
+async def _atender(file: UploadFile, solicitud: plan.Solicitud) -> JSONResponse:
     data = await _read(file)
     if isinstance(data, JSONResponse):
         return data
@@ -140,8 +145,37 @@ async def forma_migratoria(file: UploadFile = File(..., description="PDF con la 
         except Exception:  # noqa: BLE001
             log.exception("No se pudo guardar el resultado")
             result.advertencias.append("No se pudo guardar el resultado en la base de datos")
-    body = construir(result)
+    body = con_plan(construir(result), solicitud)
+    log.info("codigo=%s cumple_plan=%s", body["codigo"], body.get("validacion_plan", {}).get("cumple"))
     return JSONResponse(body, status_code=http_status(body["codigo"]))
+
+
+def _solicitud(nombre, apellido_paterno, apellido_materno, nombres, curp, fecha_nacimiento, nacionalidad) -> plan.Solicitud:
+    return plan.Solicitud(nombre=nombre, apellido_paterno=apellido_paterno, apellido_materno=apellido_materno,
+                          nombres=nombres, curp=curp, fecha_nacimiento=fecha_nacimiento, nacionalidad=nacionalidad)
+
+
+@app.post("/forma-migratoria", dependencies=[Depends(check_api_key)], response_class=JSONResponse,
+          summary="Extrae los datos de una tarjeta de residente del INM y valida contra la solicitud",
+          responses=_DOC)
+async def forma_migratoria(file: UploadFile = File(..., description="PDF con la tarjeta (anverso y reverso)"),
+                           nombre: str | None = Form(None, description=_D_NOMBRE),
+                           apellido_paterno: str | None = Form(None), apellido_materno: str | None = Form(None),
+                           nombres: str | None = Form(None), curp: str | None = Form(None, description=_D_CURP),
+                           fecha_nacimiento: str | None = Form(None, description=_D_FECHA),
+                           nacionalidad: str | None = Form(None, description=_D_NAC)) -> JSONResponse:
+    return await _atender(file, _solicitud(nombre, apellido_paterno, apellido_materno, nombres, curp,
+                                           fecha_nacimiento, nacionalidad))
+
+
+@app.post("/extract", dependencies=[Depends(check_api_key)], response_class=JSONResponse,
+          summary="Pruebas: mismo resultado que /forma-migratoria", responses=_DOC)
+async def extract(file: UploadFile = File(...), nombre: str | None = Form(None),
+                  apellido_paterno: str | None = Form(None), apellido_materno: str | None = Form(None),
+                  nombres: str | None = Form(None), curp: str | None = Form(None),
+                  fecha_nacimiento: str | None = Form(None), nacionalidad: str | None = Form(None)) -> JSONResponse:
+    return await _atender(file, _solicitud(nombre, apellido_paterno, apellido_materno, nombres, curp,
+                                           fecha_nacimiento, nacionalidad))
 
 
 def _db() -> Database:

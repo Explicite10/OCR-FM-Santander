@@ -39,6 +39,10 @@ class Settings(BaseSettings):
 
     # --- Decisiones ---
     rechazar_no_fm: bool = True  # sin tarjeta INM reconocible → estado "rechazado" (código 220)
+    # Plan de atención: "anio" (año de vigencia >= año actual, como pide el plan) o "fecha" (vencimiento >= hoy)
+    regla_vigencia: Literal["anio", "fecha"] = "anio"
+    # Si el modelo de visión falla al leer el anverso: 502 (igual que DocumentAI) en vez de responder sólo con OCR
+    error_vlm_502: bool = True
     max_concurrent_jobs: int = 2
 
     # --- API ---
