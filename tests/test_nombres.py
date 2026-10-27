@@ -52,3 +52,15 @@ def test_impreso_en_desde_ocr():
     assert r.numero_segob_inm == "SEGOB-INM-00896574" and r.impreso_en == "SRF CHETUMAL, 14/01/2025"
     r = extract([Line("Impreso en:", 0.9, 0, 0, 100, 20), Line("OR CIUDAD DE MEXICO, 05/01/2025", 0.9, 0, 30, 400, 50)])
     assert r.impreso_en == "OR CIUDAD DE MEXICO, 05/01/2025"
+
+
+def test_nombre_corregido_con_mrz():
+    from app.merge import reconcile_with_mrz as r
+    assert r("GIL", "DRORY", "DRORY", "GIL", "DRORY<<GIL<<<<<<<<<<<<<<<<<<<<") == ("DRORY", "GIL")
+    assert r("MIREZ RAMIREZ", "CLAUDIA BEATNZ JUANA", "MIEREZ RAMIREZ", "CLAUDIA BEATRI",
+             "MIEREZ<RAMIREZ<<CLAUDIA<BEATRI") == ("MIEREZ RAMIREZ", "CLAUDIA BEATRI JUANA")  # BEATRI: la MRZ truncó
+    assert r("RIOS DEBALLOS", "ISABEL RENEE", "RIOS CEBALLOS", "ANABEL RENEE",
+             "RIOS<CEBALLOS<<ANABEL<RENEE<<<") == ("RIOS CEBALLOS", "ANABEL RENEE")
+    assert r("JIMENEZ GONZALEZ", "MARIA DEL CARMEN", "JIMENEZ GONZALEZ", "MARIA DEL CARM",
+             "JIMENEZ<GONZALEZ<<MARIA<DEL<CARM") == ("JIMENEZ GONZALEZ", "MARIA DEL CARMEN")
+    assert r("PEREZ LOPEZ", "ANA MARIA", "PEREZ LOPEZ", "ANA MARIA", "PEREZ<LOPEZ<<ANA<MARIA<<<<<<<<") == ("PEREZ LOPEZ", "ANA MARIA")

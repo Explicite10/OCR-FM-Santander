@@ -44,6 +44,51 @@ def split_printed_name(printed: str | None) -> tuple[str | None, str | None]:
     return " ".join(words[:i]).upper(), " ".join(words[i:]).upper()
 
 
+def _fix_words(front: list[str], mrz: list[str], truncada: bool = False) -> list[str]:
+    """Palabras del anverso corregidas con las de la MRZ: la palabra de la MRZ sustituye a la del anverso
+    que se le parece (la MRZ puede truncar la última palabra: ahí se conserva el anverso si lo prolonga)."""
+    out: list[str] = []
+    used: set[int] = set()
+    for i, w in enumerate(mrz):
+        best, best_s = None, 0.0
+        for j, f in enumerate(front):
+            if j in used:
+                continue
+            s = max(v.similarity(f, w), v.similarity(f[:len(w)], w) if len(w) >= 3 and f.startswith(w[:2]) else 0.0)
+            if s > best_s:
+                best, best_s = j, s
+        if best is not None and best_s >= 0.6:
+            used.add(best)
+            f = front[best]
+            if len(f) > len(w) and (f.startswith(w) or (truncada and i == len(mrz) - 1)):
+                out.append(w + f[len(w):])  # MRZ truncada: la cola la pone el anverso (BEATRI + Z)
+            else:
+                out.append(w)
+        else:
+            out.append(w)
+    out += [f for j, f in enumerate(front) if j not in used]  # palabras que la MRZ no alcanzó a incluir
+    return out
+
+
+def reconcile_with_mrz(apellidos: str | None, nombres: str | None, m_ap: str | None, m_no: str | None,
+                       linea3: str) -> tuple[str | None, str | None]:
+    """Apellidos/nombres definitivos usando la MRZ como referencia de ortografía y de separación
+    (el "<<" de la MRZ dice dónde terminan los apellidos; el anverso a veces los invierte)."""
+    if not m_ap:
+        return apellidos, nombres
+    front_all = (v.norm_text(apellidos) + " " + v.norm_text(nombres)).split()
+    ap_words, no_words = m_ap.split(), (m_no or "").split()
+    truncada = bool(linea3) and not linea3.endswith("<")
+    if truncada and not no_words:
+        # Sólo cabe el apellido: se corrige el apellido y los nombres quedan como en el anverso
+        ap_fixed = _fix_words(front_all[:len(ap_words)], ap_words)
+        rest = [w for w in front_all if w not in ap_fixed]
+        return " ".join(ap_fixed) or apellidos, " ".join(rest) or nombres
+    fixed = _fix_words(front_all, ap_words + no_words, truncada)
+    k = len(ap_words)
+    return " ".join(fixed[:k]) or apellidos, " ".join(fixed[k:]) or nombres
+
+
 class Merger:
     def __init__(self, vlm_front: dict | None, vlm_back: dict | None, ocr_front: FrontOcr, ocr_back: FrontOcr,
                  mrz: MrzResult | None) -> None:
@@ -146,11 +191,21 @@ class Merger:
             a, b = full_front.replace(" ", ""), full_mrz.replace(" ", "")
             prefix_ok = a.startswith(b[:28]) or b.startswith(a[:28])
             overlap = v.word_overlap(full_front, full_mrz)
-            ok = (prefix_ok or overlap >= 0.75 or v.similarity(full_front, full_mrz) >= 0.85
-                  or v.names_match(full_front, full_mrz))
-            self._check("nombre_vs_mrz", ok, f"'{full_front}' vs MRZ '{full_mrz}' (similitud {v.similarity(full_front, full_mrz):.2f})")
-            if ok:
+            sim = v.similarity(full_front, full_mrz)
+            ok = prefix_ok or overlap >= 0.75 or sim >= 0.85 or v.names_match(full_front, full_mrz)
+            # El VLM cambia letras en nombres poco comunes (MIREZ/MIEREZ, BEATNZ/BEATRIZ); la MRZ va en
+            # fuente OCR-B y, si sus dígitos de control cuadran, se leyó limpia: se toma su ortografía.
+            corregible = not ok and sim >= 0.75 and self.mrz is not None and self.mrz.valido
+            self._check("nombre_vs_mrz", ok or corregible, f"'{full_front}' vs MRZ '{full_mrz}' (similitud {sim:.2f})")
+            if ok or corregible:
                 self.conf["nombre"] = "alta"
+                if self.mrz is not None and self.mrz.valido:
+                    ap_m, no_m = reconcile_with_mrz(n.apellidos, n.nombres, m_ap, m_no, self.mrz.lineas[2] if len(self.mrz.lineas) > 2 else "")
+                    if (ap_m, no_m) != (n.apellidos, n.nombres):
+                        if corregible:
+                            self.warnings.append(f"Nombre corregido con la MRZ: anverso '{full_front}' -> '{ap_m} {no_m}'")
+                        n.apellidos, n.nombres = ap_m, no_m
+                        n.nombre_completo = " ".join(x for x in (ap_m, no_m) if x)
                 # El frente separa apellidos de nombres por mayúsculas; si no se pudo, la MRZ sí lo sabe.
                 if not n.apellidos or not n.nombres:
                     n.apellidos, n.nombres = m_ap, m_no

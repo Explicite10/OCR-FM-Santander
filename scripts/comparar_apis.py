@@ -90,6 +90,8 @@ def mrz_verdad(body: dict, campo: str) -> str | None:
         return None
     if campo in ("apellidos", "nombres"):
         return _norm(val)
+    if campo == "sexo":
+        return {"M": "H", "F": "M", "X": "X"}.get(_norm(val), "")  # ICAO -> convención H/M de datos
     return normaliza(campo, val)
 
 
