@@ -1,4 +1,4 @@
-# Forma Migratoria OCR API
+# OCR Formatos Migratorios INM - Open Source
 
 API en FastAPI que extrae los datos de la **tarjeta de residente del Instituto Nacional de Migración**
 (Residente Temporal / Residente Permanente; también los modelos antiguos "Inmigrado" FM2) a partir de PDFs

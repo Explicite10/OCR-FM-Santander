@@ -51,9 +51,10 @@ _TAGS = [
     {"name": "Sistema", "description": "Estado del servicio."},
 ]
 app = FastAPI(
-    title="Forma Migratoria OCR API",
-    version="0.1.0",
-    description="Extracción estructurada de la tarjeta de residente del INM (Residente Temporal / Permanente).",
+    title="OCR Formatos Migratorios INM - Open Source",
+    version="0.2.0",
+    description="Extracción de la tarjeta de residente del INM con PaddleOCR + Qwen3-VL (open source) y validación MRZ. "
+                "Misma respuesta y validaciones del plan de atención que la API con Document AI.",
     lifespan=lifespan,
     docs_url="/docs" if _s.enable_docs else None,
     redoc_url=None,
