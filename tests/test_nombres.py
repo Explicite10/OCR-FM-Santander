@@ -22,3 +22,24 @@ def test_names_match_truncated_mrz():
     assert v.names_match("VILLANUEVA SOTO JUNIOR ALEJANDRO", "VILLANUEVA JUNNIOR ALEJANDROT")
     assert not v.names_match("MORALES REYES LUIS JESUS ANTONIO", "SESENTTTER")
     assert not v.names_match("GARCIA LOPEZ JUAN", "PEREZ RUIZ JUAN")
+
+
+def test_titulo_visitante_sin_fuzzy():
+    """Basura del OCR de un pasaporte ("ais inte") no debe pasar por el título VISITANTE."""
+    from app.layout import is_title
+    assert is_title("ais  inte") is None
+    assert is_title("VISITANTE") == "VISITANTE"
+    assert is_title("RESIDENTE PERMANENTE") == "RESIDENTE PERMANENTE"
+
+
+def test_anverso_fuerte_gana_al_debil():
+    """Pasaporte en la página 1 y tarjeta en la 2: el anverso debe ser la página 2."""
+    from app.layout import front_strength
+    from app.ocr import Line
+    pasaporte = [Line("PASAPORTE N°", 0.9, 10, 10, 200, 30),
+                 Line("P<VENNAVA<ROMERO<<YUNEIXI<KARINA<<<<<<<<<<<<", 0.9, 10, 40, 600, 60)]
+    tarjeta = [Line("INSTITUTO NACIONAL DE MIGRACION", 0.9, 10, 10, 400, 30),
+               Line("RESIDENTE PERMANENTE", 0.9, 10, 40, 300, 60)]
+    assert front_strength("VISITANTE", pasaporte) == 0
+    assert front_strength(None, tarjeta) == 1
+    assert front_strength("RESIDENTE PERMANENTE", tarjeta) == 2

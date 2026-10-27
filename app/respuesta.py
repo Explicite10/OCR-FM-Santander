@@ -114,7 +114,7 @@ def mrz(r: ResultadoFM) -> dict:
         "pais_emisor": m.lineas[0][2:5],
         "numero_documento": m.numero_documento,
         "fecha_nacimiento": m.fecha_nacimiento.isoformat() if m.fecha_nacimiento else None,
-        "sexo": m.sexo,
+        "sexo": m.sexo_mrz,  # convención ICAO (M/F), distinta de datos.sexo (H/M); igual que DocumentAI
         "fecha_expedicion": m.fecha_expedicion.isoformat() if m.fecha_expedicion else None,
         "sin_fecha_expedicion": m.sin_fecha or None,
         "nacionalidad": m.nacionalidad,

@@ -112,9 +112,23 @@ def is_title(t: str) -> str | None:
         return "RESIDENTE PERMANENTE"
     if n.startswith("INMIGRADO") or n == "INMIGRANTE" or n.startswith("NOINMIGRANTE"):
         return n if n in ("INMIGRADO", "INMIGRANTE", "NOINMIGRANTE") else "INMIGRADO"
-    if _fuzzy_in(n, "VISITANTE") and len(n) < 40:
+    if "VISITANTE" in n and len(n) < 40:
         return "VISITANTE"
     return None
+
+
+STRONG_TITLES = ("RESIDENTE TEMPORAL", "RESIDENTE PERMANENTE", "INMIGRADO", "INMIGRANTE", "NOINMIGRANTE")
+
+
+def front_strength(tipo: str | None, lines: list[Line]) -> int:
+    """2 = título de tarjeta INM (ancla fuerte) · 1 = sólo encabezado INM o título débil (VISITANTE)
+    · 0 = débil en una página que es claramente otro documento (pasaporte / INE): no sirve de ancla."""
+    if tipo in STRONG_TITLES:
+        return 2
+    if any(is_header(l.text) for l in lines):
+        return 1 if tipo is None else 2
+    otros = other_documents(lines)
+    return 0 if any(o.startswith(("pasaporte", "ine")) for o in otros) else 1
 
 
 def is_header(t: str) -> bool:
@@ -277,8 +291,9 @@ def analyze(pages: list[np.ndarray], ocr_read) -> Layout:
     page_images: list[np.ndarray] = []
     otros: list[str] = []
 
+    front_strength_best = 0
     for i, page in enumerate(pages):
-        if front and back:
+        if front and back and front_strength_best >= 2:
             page_images.append(page)
             page_lines.append([])
             continue
@@ -290,8 +305,13 @@ def analyze(pages: list[np.ndarray], ocr_read) -> Layout:
         if back is None and back_box:
             back = Side(i, back_box, _crop(img, back_box), _lines_in(lines, back_box), "ancla",
                         mrz_lines=[l.text for l in mrz])
-        if front is None and front_box:
-            front = Side(i, front_box, _crop(img, front_box), _lines_in(lines, front_box), "ancla")
+        if front_box:
+            # Un título "RESIDENTE ..." en una página posterior gana a un ancla débil (p. ej. el pasaporte
+            # que viene antes de la tarjeta en el mismo PDF).
+            strength = front_strength(tipo, lines)
+            if strength > 0 and (front is None or strength > front_strength_best):
+                front = Side(i, front_box, _crop(img, front_box), _lines_in(lines, front_box), "ancla")
+                front_strength_best = strength
 
     layout = Layout(front, back, rotated, len(pages), warnings, page_lines, page_images,
                     list(dict.fromkeys(otros)))
