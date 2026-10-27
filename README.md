@@ -66,6 +66,16 @@ python -m scripts.procesar_lote --salida lote/resultados --solo-resumen
 Genera `json/*.json` y `resultados.csv` (datos personales; no sacar del servidor), `diagnostico.csv` y
 `resumen.md` (sin datos personales), y con `--recortes` los PNG del anverso/reverso localizados.
 
+**Comparar con otra API** (p. ej. la de Document AI) sobre la misma carpeta, campo por campo y con la MRZ de árbitro:
+
+```bash
+API_A_URL=http://localhost:18475 API_A_KEY=... API_B_URL=http://localhost:18476 API_B_KEY=... python -m scripts.comparar_apis lote/pdfs --salida lote/comparacion --concurrencia 2
+```
+
+Genera `comparacion.md` (sin datos personales: códigos, acuerdo por campo, quién acierta según la MRZ, archivos con
+diferencias) y `comparacion.csv` (valores de ambas; no sacar del servidor). En el servidor:
+`docker compose run --rm -v $PWD/scripts:/app/scripts -e API_A_URL=... --entrypoint python lote -m scripts.comparar_apis ...`
+
 **Pruebas**: `python -m pytest -q`
 
 ## Servidor (Docker)
