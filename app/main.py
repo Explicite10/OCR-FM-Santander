@@ -44,6 +44,12 @@ async def lifespan(app: FastAPI):
 
 
 _s = get_settings()
+_TAGS = [
+    {"name": "Forma migratoria", "description": "Endpoint principal. Usar este en los sistemas que consumen la API."},
+    {"name": "Pruebas", "description": "Endpoint alterno para pruebas. Responde igual que /forma-migratoria."},
+    {"name": "Historial", "description": "Extracciones guardadas (requiere DATABASE_URL) y revisión humana."},
+    {"name": "Sistema", "description": "Estado del servicio."},
+]
 app = FastAPI(
     title="Forma Migratoria OCR API",
     version="0.1.0",
@@ -52,6 +58,7 @@ app = FastAPI(
     docs_url="/docs" if _s.enable_docs else None,
     redoc_url=None,
     openapi_url="/openapi.json" if _s.enable_docs else None,
+    openapi_tags=_TAGS,
 )
 
 _api_key = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -85,7 +92,7 @@ async def _internal_error(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(sobre(500), status_code=500)
 
 
-@app.get("/health")
+@app.get("/health", tags=["Sistema"], summary="Estado del servicio")
 async def health():
     s = get_settings()
     vlm_ok = await app.state.vlm.health() if app.state.vlm else None
@@ -155,7 +162,7 @@ def _solicitud(nombre, apellido_paterno, apellido_materno, nombres, curp, fecha_
                           nombres=nombres, curp=curp, fecha_nacimiento=fecha_nacimiento, nacionalidad=nacionalidad)
 
 
-@app.post("/forma-migratoria", dependencies=[Depends(check_api_key)], response_class=JSONResponse,
+@app.post("/forma-migratoria", dependencies=[Depends(check_api_key)], response_class=JSONResponse, tags=["Forma migratoria"],
           summary="Extrae los datos de una tarjeta de residente del INM y valida contra la solicitud",
           responses=_DOC)
 async def forma_migratoria(file: UploadFile = File(..., description="PDF con la tarjeta (anverso y reverso)"),
@@ -168,7 +175,7 @@ async def forma_migratoria(file: UploadFile = File(..., description="PDF con la 
                                            fecha_nacimiento, nacionalidad))
 
 
-@app.post("/extract", dependencies=[Depends(check_api_key)], response_class=JSONResponse,
+@app.post("/extract", dependencies=[Depends(check_api_key)], response_class=JSONResponse, tags=["Pruebas"],
           summary="Pruebas: mismo resultado que /forma-migratoria", responses=_DOC)
 async def extract(file: UploadFile = File(...), nombre: str | None = Form(None),
                   apellido_paterno: str | None = Form(None), apellido_materno: str | None = Form(None),
@@ -190,14 +197,14 @@ def _resumen(r: Extraccion) -> ExtraccionResumen:
                              tiempo_ms=r.tiempo_ms)
 
 
-@app.get("/v1/forma-migratoria/extracciones", response_model=ListaExtracciones, dependencies=[Depends(check_api_key)])
+@app.get("/v1/forma-migratoria/extracciones", response_model=ListaExtracciones, dependencies=[Depends(check_api_key)], tags=["Historial"])
 async def listar(estado: str | None = Query(None), curp: str | None = None, q: str | None = Query(None),
                  limite: int = Query(50, ge=1, le=500), desde: int = Query(0, ge=0)) -> ListaExtracciones:
     total, rows = await _db().list(estado, curp, q, limite, desde)
     return ListaExtracciones(total=total, elementos=[_resumen(r) for r in rows])
 
 
-@app.get("/v1/forma-migratoria/extracciones/{id_}", response_model=ExtraccionDetalle, dependencies=[Depends(check_api_key)])
+@app.get("/v1/forma-migratoria/extracciones/{id_}", response_model=ExtraccionDetalle, dependencies=[Depends(check_api_key)], tags=["Historial"])
 async def detalle(id_: str) -> ExtraccionDetalle:
     r = await _db().get(id_)
     if r is None:
@@ -207,7 +214,7 @@ async def detalle(id_: str) -> ExtraccionDetalle:
 
 
 @app.put("/v1/forma-migratoria/extracciones/{id_}/revision", response_model=ExtraccionDetalle,
-         dependencies=[Depends(check_api_key)])
+         dependencies=[Depends(check_api_key)], tags=["Historial"])
 async def revisar(id_: str, revision: Revision = Body(...)) -> ExtraccionDetalle:
     r = await _db().review(id_, revision.datos, revision.revisado_por)
     if r is None:
