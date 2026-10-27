@@ -19,6 +19,7 @@ class FrontOcr:
     pais: str | None = None
     numero_segob_inm: str | None = None
     numero_documento: str | None = None
+    impreso_en: str | None = None
 
 
 def _n(t: str) -> str:
@@ -55,6 +56,13 @@ def extract(lines: list[Line]) -> FrontOcr:
             seg = "SEGOB-INM-" + re.sub(r"\D", "", m.group(1))
             if SEGOB_RE.match(seg):
                 res.numero_segob_inm = seg
+        m = re.search(r"IMPRESO\s*EN\s*:?\s*(.+)$", strip_accents(l.text.upper()))
+        if m and res.impreso_en is None:
+            rest = m.group(1).strip(" :-")
+            if len(rest) < 4 and i + 1 < len(lines):  # "Impreso en:" solo y el valor en la línea siguiente
+                rest = strip_accents(lines[i + 1].text.upper()).strip()
+            if len(rest) >= 4:
+                res.impreso_en = re.sub(r"\s+", " ", rest)
         m = re.fullmatch(r"NO\.?(\d{7,9})", n)
         if m and res.numero_documento is None:
             res.numero_documento = m.group(1)

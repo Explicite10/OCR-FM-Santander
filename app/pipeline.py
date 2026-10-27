@@ -127,11 +127,13 @@ async def process(files: list[bytes], vlm: VlmClient | None, filename: str | Non
 
     ocr_front = front_ocr.extract(layout.front.lines if layout.front and layout.front.method == "ancla" else [])
     ocr_back = front_ocr.extract(layout.back.lines if layout.back and layout.back.method == "ancla" else [])
-    if not ocr_back.numero_segob_inm:
-        # El "SEGOB-INM-" se imprime arriba del reverso y a veces queda fuera del recorte: se busca en toda la página
+    if not ocr_back.numero_segob_inm or not ocr_back.impreso_en:
+        # "SEGOB-INM-" e "Impreso en:" van arriba del reverso y a veces quedan fuera del recorte: toda la página
         pagina = layout.back.page if layout.back else None
         if pagina is not None and pagina < len(layout.page_lines):
-            ocr_back.numero_segob_inm = front_ocr.extract(layout.page_lines[pagina]).numero_segob_inm
+            whole = front_ocr.extract(layout.page_lines[pagina])
+            ocr_back.numero_segob_inm = ocr_back.numero_segob_inm or whole.numero_segob_inm
+            ocr_back.impreso_en = ocr_back.impreso_en or whole.impreso_en
     ocr_mrz = mrz_td1.parse(layout.back.mrz_lines) if layout.back and layout.back.mrz_lines else None
 
     # 3. VLM: anverso siempre; reverso si la MRZ del OCR no cuadra al 100 % o falta el SEGOB-INM

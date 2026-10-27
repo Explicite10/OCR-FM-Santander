@@ -43,3 +43,12 @@ def test_anverso_fuerte_gana_al_debil():
     assert front_strength("VISITANTE", pasaporte) == 0
     assert front_strength(None, tarjeta) == 1
     assert front_strength("RESIDENTE PERMANENTE", tarjeta) == 2
+
+
+def test_impreso_en_desde_ocr():
+    from app.front_ocr import extract
+    from app.ocr import Line
+    r = extract([Line("SEGOB-INM-00896574", 0.9, 0, 0, 300, 20), Line("Impreso en: SRF CHETUMAL, 14/01/2025", 0.9, 0, 30, 400, 50)])
+    assert r.numero_segob_inm == "SEGOB-INM-00896574" and r.impreso_en == "SRF CHETUMAL, 14/01/2025"
+    r = extract([Line("Impreso en:", 0.9, 0, 0, 100, 20), Line("OR CIUDAD DE MEXICO, 05/01/2025", 0.9, 0, 30, 400, 50)])
+    assert r.impreso_en == "OR CIUDAD DE MEXICO, 05/01/2025"

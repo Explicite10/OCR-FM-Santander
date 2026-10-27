@@ -389,7 +389,8 @@ class Merger:
             self.conf["numero_segob_inm"] = "alta" if (seg_v and seg_o and seg_v == seg_o) else "media"
             if seg_v and seg_o and seg_v != seg_o:
                 self.conf["numero_segob_inm"] = "baja"
-        d.impreso_en = self._v("impreso_en", self.vb)
+        # "Impreso en": el VLM sólo lee el reverso cuando hace falta; el OCR lo trae casi siempre
+        d.impreso_en = self._v("impreso_en", self.vb) or self.ob.impreso_en
         d.condicion_estancia = self._v("condicion_estancia", self.vb)
         if self.mrz:
             for c in self.mrz.checks:
