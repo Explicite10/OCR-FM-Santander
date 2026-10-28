@@ -1,0 +1,1122 @@
+{
+  "200": {
+    "codigo": 200,
+    "estado": "PROCESADO",
+    "mensaje": "El documento se procesó y todas las comprobaciones cuadraron.",
+    "datos": {
+      "tipo_documento": "RESIDENTE TEMPORAL",
+      "nue": "0000001234567",
+      "apellidos": "PEREZ GOMEZ",
+      "nombres": "MARIA FERNANDA",
+      "nombre_completo": "PEREZ GOMEZ MARIA FERNANDA",
+      "nacionalidad": "COLOMBIANA",
+      "pais": "COL",
+      "sexo": "M",
+      "fecha_nacimiento": "1990-06-09",
+      "curp": "PEGF900609MNERMR07",
+      "permiso_para_trabajar": true,
+      "fecha_expedicion": "2025-01-13",
+      "fecha_vencimiento": "2027-01-12",
+      "vigente": true,
+      "numero_documento": "12345678",
+      "numero_segob_inm": "SEGOB-INM-00123456",
+      "impreso_en": "OR CIUDAD DE MEXICO, 15/01/2025",
+      "pais_emisor": "MEX"
+    },
+    "mrz": {
+      "lineas": [
+        "I<MEX12345678<8<<<<<<<<<<<<<<<",
+        "9006094F2501132COL<<<<<<<<<<<0",
+        "PEREZ<GOMEZ<<MARIA<FERNANDA<<<"
+      ],
+      "tipo_documento": "I<",
+      "pais_emisor": "MEX",
+      "numero_documento": "12345678",
+      "fecha_nacimiento": "1990-06-09",
+      "sexo": "F",
+      "fecha_expedicion": "2025-01-13",
+      "nacionalidad": "COL",
+      "apellidos": "PEREZ GOMEZ",
+      "nombres": "MARIA FERNANDA",
+      "digitos_control": {
+        "numero_documento": true,
+        "fecha_nacimiento": true,
+        "fecha_expedicion": true,
+        "compuesto": true
+      },
+      "integra": true,
+      "origen": "texto"
+    },
+    "validacion": {
+      "ok": true,
+      "completo": true,
+      "coincidencias": [
+        "MRZ (dígitos de control)",
+        "apellidos y nombres (MRZ)",
+        "fecha_nacimiento (anverso vs MRZ)",
+        "fecha_nacimiento (anverso, MRZ, CURP)",
+        "sexo (anverso, MRZ, CURP)",
+        "curp (estructura y dígito verificador)",
+        "curp vs fecha_nacimiento",
+        "curp vs sexo",
+        "curp (entidad NE = nacido en el extranjero)",
+        "curp vs nombre (iniciales)",
+        "pais vs nacionalidad (MRZ)",
+        "fecha_expedicion (anverso vs MRZ)",
+        "fecha_expedicion < fecha_vencimiento",
+        "numero_documento (reverso vs MRZ)"
+      ],
+      "discrepancias": [],
+      "sin_verificar": []
+    },
+    "avisos": [],
+    "clasificacion": {
+      "categoria": "forma_migratoria",
+      "confianza": null,
+      "caracteres_leidos": 812,
+      "senales": [
+        "INSTITUTO NACIONAL DE MIGRACIÓN",
+        "RESIDENTE TEMPORAL",
+        "NUE",
+        "SEGOB-INM",
+        "mrz_td1"
+      ],
+      "otros_documentos": [
+        "pasaporte (COL)"
+      ]
+    },
+    "confianza": {
+      "tipo_documento": "alta",
+      "nue": "alta",
+      "nombre": "alta",
+      "fecha_nacimiento": "alta",
+      "sexo": "alta",
+      "curp": "alta",
+      "pais": "alta",
+      "nacionalidad": "alta",
+      "fecha_expedicion": "alta",
+      "fecha_vencimiento": "alta",
+      "numero_documento": "alta",
+      "numero_segob_inm": "alta"
+    },
+    "meta": {
+      "tiempo_total_ms": 18400,
+      "tiempos_ms": {
+        "render": 310,
+        "ocr_y_recorte": 6900,
+        "vlm_anverso": 6200
+      },
+      "paginas": 2,
+      "paginas_forma_migratoria": [
+        2
+      ],
+      "paginas_ignoradas": [
+        1
+      ],
+      "motor": "paddleocr+vlm",
+      "version_modelo": "qwen3-vl:8b-instruct",
+      "modelo_vlm": "qwen3-vl:8b-instruct",
+      "pagina_anverso": 2,
+      "pagina_reverso": 2,
+      "recorte_anverso": "ancla",
+      "recorte_reverso": "ancla",
+      "mrz_fuente": "texto"
+    },
+    "validacion_plan": {
+      "cumple": true,
+      "mensaje": "Documento válido: cumple con todas las validaciones.",
+      "motivos_rechazo": [],
+      "regla_vigencia": "anio",
+      "validaciones": [
+        {
+          "id": "hoja_en_blanco",
+          "pregunta": "¿Es una hoja en blanco?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "El documento tiene contenido."
+        },
+        {
+          "id": "imagen_ilegible",
+          "pregunta": "¿La imagen es ilegible?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "Los datos esenciales se leyeron y la MRZ es legible."
+        },
+        {
+          "id": "es_forma_migratoria",
+          "pregunta": "¿Es una FM?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "Se identificó una tarjeta de residente del INM."
+        },
+        {
+          "id": "vigente",
+          "pregunta": "¿Está vigente?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "Año de vigencia 2027 contra año actual 2026."
+        },
+        {
+          "id": "nombre_coincide",
+          "pregunta": "¿El nombre coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "El nombre coincide con la captura (sin importar orden, acentos ni mayúsculas)."
+        },
+        {
+          "id": "curp_coincide",
+          "pregunta": "¿La CURP coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "La CURP coincide con la captura."
+        },
+        {
+          "id": "fecha_nacimiento_coincide",
+          "pregunta": "¿La fecha de nacimiento coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "La fecha de nacimiento coincide con la captura."
+        },
+        {
+          "id": "nacionalidad_coincide",
+          "pregunta": "¿La nacionalidad coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "La nacionalidad coincide (COL)."
+        }
+      ]
+    }
+  },
+  "210": {
+    "codigo": 210,
+    "estado": "PROCESADO_CON_DISCREPANCIAS",
+    "mensaje": "El documento se procesó, pero hay datos que se contradicen entre sí: revisa validacion.discrepancias.",
+    "datos": {
+      "tipo_documento": "RESIDENTE TEMPORAL",
+      "nue": "0000001234567",
+      "apellidos": "PEREZ GOMEZ",
+      "nombres": "MARIA FERNANDA",
+      "nombre_completo": "PEREZ GOMEZ MARIA FERNANDA",
+      "nacionalidad": "COLOMBIANA",
+      "pais": "COL",
+      "sexo": "M",
+      "fecha_nacimiento": "1990-06-09",
+      "curp": "PEGF910609MNERMR04",
+      "permiso_para_trabajar": true,
+      "fecha_expedicion": "2025-01-13",
+      "fecha_vencimiento": "2027-01-12",
+      "vigente": true,
+      "numero_documento": "12345678",
+      "numero_segob_inm": "SEGOB-INM-00123456",
+      "impreso_en": "OR CIUDAD DE MEXICO, 15/01/2025",
+      "pais_emisor": "MEX"
+    },
+    "mrz": {
+      "lineas": [
+        "I<MEX12345678<8<<<<<<<<<<<<<<<",
+        "9006094F2501132COL<<<<<<<<<<<0",
+        "PEREZ<GOMEZ<<MARIA<FERNANDA<<<"
+      ],
+      "tipo_documento": "I<",
+      "pais_emisor": "MEX",
+      "numero_documento": "12345678",
+      "fecha_nacimiento": "1990-06-09",
+      "sexo": "F",
+      "fecha_expedicion": "2025-01-13",
+      "nacionalidad": "COL",
+      "apellidos": "PEREZ GOMEZ",
+      "nombres": "MARIA FERNANDA",
+      "digitos_control": {
+        "numero_documento": true,
+        "fecha_nacimiento": true,
+        "fecha_expedicion": true,
+        "compuesto": true
+      },
+      "integra": true,
+      "origen": "texto"
+    },
+    "validacion": {
+      "ok": false,
+      "completo": true,
+      "coincidencias": [
+        "MRZ (dígitos de control)",
+        "apellidos y nombres (MRZ)",
+        "fecha_nacimiento (anverso vs MRZ)",
+        "sexo (anverso, MRZ, CURP)",
+        "curp (estructura y dígito verificador)",
+        "curp vs sexo",
+        "curp (entidad NE = nacido en el extranjero)",
+        "curp vs nombre (iniciales)",
+        "pais vs nacionalidad (MRZ)",
+        "fecha_expedicion (anverso vs MRZ)",
+        "fecha_expedicion < fecha_vencimiento",
+        "numero_documento (reverso vs MRZ)"
+      ],
+      "discrepancias": [
+        "fecha_nacimiento (anverso, MRZ, CURP): difieren: vlm, mrz, curp",
+        "curp vs fecha_nacimiento: CURP 1991-06-09 vs 1990-06-09"
+      ],
+      "sin_verificar": []
+    },
+    "avisos": [],
+    "clasificacion": {
+      "categoria": "forma_migratoria",
+      "confianza": null,
+      "caracteres_leidos": 812,
+      "senales": [
+        "INSTITUTO NACIONAL DE MIGRACIÓN",
+        "RESIDENTE TEMPORAL",
+        "NUE",
+        "SEGOB-INM",
+        "mrz_td1"
+      ],
+      "otros_documentos": [
+        "pasaporte (COL)"
+      ]
+    },
+    "confianza": {
+      "tipo_documento": "alta",
+      "nue": "alta",
+      "nombre": "alta",
+      "fecha_nacimiento": "alta",
+      "sexo": "alta",
+      "curp": "alta",
+      "pais": "alta",
+      "nacionalidad": "alta",
+      "fecha_expedicion": "alta",
+      "fecha_vencimiento": "alta",
+      "numero_documento": "alta",
+      "numero_segob_inm": "alta"
+    },
+    "meta": {
+      "tiempo_total_ms": 18400,
+      "tiempos_ms": {
+        "render": 310,
+        "ocr_y_recorte": 6900,
+        "vlm_anverso": 6200
+      },
+      "paginas": 2,
+      "paginas_forma_migratoria": [
+        2
+      ],
+      "paginas_ignoradas": [
+        1
+      ],
+      "motor": "paddleocr+vlm",
+      "version_modelo": "qwen3-vl:8b-instruct",
+      "modelo_vlm": "qwen3-vl:8b-instruct",
+      "pagina_anverso": 2,
+      "pagina_reverso": 2,
+      "recorte_anverso": "ancla",
+      "recorte_reverso": "ancla",
+      "mrz_fuente": "texto"
+    },
+    "validacion_plan": {
+      "cumple": false,
+      "mensaje": "Revisar documento y motivo de rechazo",
+      "motivos_rechazo": [
+        "¿La CURP coincide? NO: La CURP no coincide: tarjeta 'PEGF910609MNERMR04' vs solicitud 'PEGF900609MNERMR07'."
+      ],
+      "regla_vigencia": "anio",
+      "validaciones": [
+        {
+          "id": "hoja_en_blanco",
+          "pregunta": "¿Es una hoja en blanco?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "El documento tiene contenido."
+        },
+        {
+          "id": "imagen_ilegible",
+          "pregunta": "¿La imagen es ilegible?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "Los datos esenciales se leyeron y la MRZ es legible."
+        },
+        {
+          "id": "es_forma_migratoria",
+          "pregunta": "¿Es una FM?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "Se identificó una tarjeta de residente del INM."
+        },
+        {
+          "id": "vigente",
+          "pregunta": "¿Está vigente?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "Año de vigencia 2027 contra año actual 2026."
+        },
+        {
+          "id": "nombre_coincide",
+          "pregunta": "¿El nombre coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "El nombre coincide con la captura (sin importar orden, acentos ni mayúsculas)."
+        },
+        {
+          "id": "curp_coincide",
+          "pregunta": "¿La CURP coincide?",
+          "resultado": "NO",
+          "ok": false,
+          "detalle": "La CURP no coincide: tarjeta 'PEGF910609MNERMR04' vs solicitud 'PEGF900609MNERMR07'."
+        },
+        {
+          "id": "fecha_nacimiento_coincide",
+          "pregunta": "¿La fecha de nacimiento coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "La fecha de nacimiento coincide con la captura."
+        },
+        {
+          "id": "nacionalidad_coincide",
+          "pregunta": "¿La nacionalidad coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "La nacionalidad coincide (COL)."
+        }
+      ]
+    }
+  },
+  "211": {
+    "codigo": 211,
+    "estado": "PROCESADO_CON_AVISOS",
+    "mensaje": "El documento se procesó sin contradicciones, pero hay puntos que conviene revisar a mano: revisa avisos.",
+    "datos": {
+      "tipo_documento": "RESIDENTE TEMPORAL",
+      "nue": "0000001234567",
+      "apellidos": "PEREZ GOMEZ",
+      "nombres": "MARIA FERNANDA",
+      "nombre_completo": "PEREZ GOMEZ MARIA FERNANDA",
+      "nacionalidad": "COLOMBIANA",
+      "pais": "COL",
+      "sexo": "M",
+      "fecha_nacimiento": "1990-06-09",
+      "curp": "PEGF900609MNERMR07",
+      "permiso_para_trabajar": true,
+      "fecha_expedicion": "2025-01-13",
+      "fecha_vencimiento": "2027-01-12",
+      "vigente": true,
+      "numero_documento": "12345678",
+      "numero_segob_inm": "SEGOB-INM-00123456",
+      "impreso_en": "OR CIUDAD DE MEXICO, 15/01/2025",
+      "pais_emisor": "MEX"
+    },
+    "mrz": {
+      "lineas": [
+        "I<MEX12345678<8<<<<<<<<<<<<<<<",
+        "9006094F2501132COL<<<<<<<<<<<0",
+        "PEREZ<GOMEZ<<MARIA<FERNANDA<<<"
+      ],
+      "tipo_documento": "I<",
+      "pais_emisor": "MEX",
+      "numero_documento": "12345678",
+      "fecha_nacimiento": "1990-06-09",
+      "sexo": "F",
+      "fecha_expedicion": "2025-01-13",
+      "nacionalidad": "COL",
+      "apellidos": "PEREZ GOMEZ",
+      "nombres": "MARIA FERNANDA",
+      "digitos_control": {
+        "numero_documento": true,
+        "fecha_nacimiento": true,
+        "fecha_expedicion": true,
+        "compuesto": true
+      },
+      "integra": true,
+      "origen": "texto"
+    },
+    "validacion": {
+      "ok": true,
+      "completo": true,
+      "coincidencias": [
+        "MRZ (dígitos de control)",
+        "apellidos y nombres (MRZ)",
+        "fecha_nacimiento (anverso vs MRZ)",
+        "fecha_nacimiento (anverso, MRZ, CURP)",
+        "sexo (anverso, MRZ, CURP)",
+        "curp (estructura y dígito verificador)",
+        "curp vs fecha_nacimiento",
+        "curp vs sexo",
+        "curp (entidad NE = nacido en el extranjero)",
+        "curp vs nombre (iniciales)",
+        "pais vs nacionalidad (MRZ)",
+        "fecha_expedicion (anverso vs MRZ)",
+        "fecha_expedicion < fecha_vencimiento"
+      ],
+      "discrepancias": [],
+      "sin_verificar": []
+    },
+    "avisos": [
+      "numero_documento (reverso vs MRZ): reverso 12345670 vs MRZ 12345678; se entrega el de la MRZ, respaldado por su dígito verificador"
+    ],
+    "clasificacion": {
+      "categoria": "forma_migratoria",
+      "confianza": null,
+      "caracteres_leidos": 812,
+      "senales": [
+        "INSTITUTO NACIONAL DE MIGRACIÓN",
+        "RESIDENTE TEMPORAL",
+        "NUE",
+        "SEGOB-INM",
+        "mrz_td1"
+      ],
+      "otros_documentos": [
+        "pasaporte (COL)"
+      ]
+    },
+    "confianza": {
+      "tipo_documento": "alta",
+      "nue": "alta",
+      "nombre": "alta",
+      "fecha_nacimiento": "alta",
+      "sexo": "alta",
+      "curp": "alta",
+      "pais": "alta",
+      "nacionalidad": "alta",
+      "fecha_expedicion": "alta",
+      "fecha_vencimiento": "alta",
+      "numero_documento": "alta",
+      "numero_segob_inm": "alta"
+    },
+    "meta": {
+      "tiempo_total_ms": 18400,
+      "tiempos_ms": {
+        "render": 310,
+        "ocr_y_recorte": 6900,
+        "vlm_anverso": 6200
+      },
+      "paginas": 2,
+      "paginas_forma_migratoria": [
+        2
+      ],
+      "paginas_ignoradas": [
+        1
+      ],
+      "motor": "paddleocr+vlm",
+      "version_modelo": "qwen3-vl:8b-instruct",
+      "modelo_vlm": "qwen3-vl:8b-instruct",
+      "pagina_anverso": 2,
+      "pagina_reverso": 2,
+      "recorte_anverso": "ancla",
+      "recorte_reverso": "ancla",
+      "mrz_fuente": "texto"
+    },
+    "validacion_plan": {
+      "cumple": true,
+      "mensaje": "Documento válido: cumple con todas las validaciones.",
+      "motivos_rechazo": [],
+      "regla_vigencia": "anio",
+      "validaciones": [
+        {
+          "id": "hoja_en_blanco",
+          "pregunta": "¿Es una hoja en blanco?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "El documento tiene contenido."
+        },
+        {
+          "id": "imagen_ilegible",
+          "pregunta": "¿La imagen es ilegible?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "Los datos esenciales se leyeron y la MRZ es legible."
+        },
+        {
+          "id": "es_forma_migratoria",
+          "pregunta": "¿Es una FM?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "Se identificó una tarjeta de residente del INM."
+        },
+        {
+          "id": "vigente",
+          "pregunta": "¿Está vigente?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "Año de vigencia 2027 contra año actual 2026."
+        },
+        {
+          "id": "nombre_coincide",
+          "pregunta": "¿El nombre coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "El nombre coincide con la captura (sin importar orden, acentos ni mayúsculas)."
+        },
+        {
+          "id": "curp_coincide",
+          "pregunta": "¿La CURP coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "La CURP coincide con la captura."
+        },
+        {
+          "id": "fecha_nacimiento_coincide",
+          "pregunta": "¿La fecha de nacimiento coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "La fecha de nacimiento coincide con la captura."
+        },
+        {
+          "id": "nacionalidad_coincide",
+          "pregunta": "¿La nacionalidad coincide?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "La nacionalidad coincide (COL)."
+        }
+      ]
+    }
+  },
+  "permanente": {
+    "codigo": 211,
+    "estado": "PROCESADO_CON_AVISOS",
+    "mensaje": "El documento se procesó sin contradicciones, pero hay puntos que conviene revisar a mano: revisa avisos.",
+    "datos": {
+      "tipo_documento": "RESIDENTE PERMANENTE",
+      "nue": "0000007654321",
+      "apellidos": "RAMIREZ",
+      "nombres": "JOSE LUIS",
+      "nombre_completo": "RAMIREZ JOSE LUIS",
+      "nacionalidad": "VENEZOLANA",
+      "pais": "VEN",
+      "sexo": "H",
+      "fecha_nacimiento": "1985-03-15",
+      "permiso_para_trabajar": false,
+      "fecha_expedicion": "2015-04-28",
+      "vigente": true,
+      "numero_documento": "87654321",
+      "impreso_en": "DELEGACION FEDERAL EN DISTRITO FEDERAL, 28/04/2015",
+      "pais_emisor": "MEX"
+    },
+    "mrz": {
+      "lineas": [
+        "I<MEX87654321<0<<<<<<<<<<<<<<<",
+        "8503150M<<<<<<0VEN<<<<<<<<<<<4",
+        "RAMIREZ<<JOSE<LUIS<<<<<<<<<<<<"
+      ],
+      "tipo_documento": "I<",
+      "pais_emisor": "MEX",
+      "numero_documento": "87654321",
+      "fecha_nacimiento": "1985-03-15",
+      "sexo": "M",
+      "sin_fecha_expedicion": true,
+      "nacionalidad": "VEN",
+      "apellidos": "RAMIREZ",
+      "nombres": "JOSE LUIS",
+      "digitos_control": {
+        "numero_documento": true,
+        "fecha_nacimiento": true,
+        "fecha_expedicion": null,
+        "compuesto": true
+      },
+      "integra": true,
+      "origen": "texto"
+    },
+    "validacion": {
+      "ok": true,
+      "completo": false,
+      "coincidencias": [
+        "MRZ (dígitos de control)",
+        "apellidos y nombres (MRZ)",
+        "fecha_nacimiento (anverso vs MRZ)",
+        "fecha_nacimiento (anverso, MRZ, CURP)",
+        "sexo (anverso, MRZ, CURP)",
+        "pais vs nacionalidad (MRZ)",
+        "numero_documento (reverso vs MRZ)"
+      ],
+      "discrepancias": [],
+      "sin_verificar": [
+        "curp (estructura y dígito verificador): falta el dato"
+      ]
+    },
+    "avisos": [
+      "datos.curp: confianza baja (las lecturas no coinciden o no se pudo leer); revisar contra el original",
+      "fecha_expedicion tomada de 'Expedido en' del reverso"
+    ],
+    "clasificacion": {
+      "categoria": "forma_migratoria",
+      "confianza": null,
+      "caracteres_leidos": 812,
+      "senales": [
+        "RESIDENTE PERMANENTE",
+        "NUE",
+        "mrz_td1"
+      ]
+    },
+    "confianza": {
+      "tipo_documento": "alta",
+      "nue": "alta",
+      "nombre": "alta",
+      "fecha_nacimiento": "alta",
+      "sexo": "alta",
+      "curp": "baja",
+      "pais": "alta",
+      "nacionalidad": "alta",
+      "fecha_vencimiento": "alta",
+      "numero_documento": "alta",
+      "fecha_expedicion": "media"
+    },
+    "meta": {
+      "tiempo_total_ms": 18400,
+      "tiempos_ms": {
+        "render": 310,
+        "ocr_y_recorte": 6900,
+        "vlm_anverso": 6200
+      },
+      "paginas": 1,
+      "paginas_forma_migratoria": [
+        1
+      ],
+      "motor": "paddleocr+vlm",
+      "version_modelo": "qwen3-vl:8b-instruct",
+      "modelo_vlm": "qwen3-vl:8b-instruct",
+      "pagina_anverso": 1,
+      "pagina_reverso": 1,
+      "recorte_anverso": "ancla",
+      "recorte_reverso": "ancla",
+      "mrz_fuente": "texto"
+    },
+    "validacion_plan": {
+      "cumple": false,
+      "mensaje": "Revisar documento y motivo de rechazo",
+      "motivos_rechazo": [
+        "¿El nombre coincide? NO: El nombre no coincide. En la solicitud y no en la tarjeta: FERNANDA GOMEZ MARIA PEREZ. En la tarjeta y no en la solicitud: JOSE LUIS RAMIREZ.",
+        "¿La fecha de nacimiento coincide? NO: La fecha de nacimiento no coincide: tarjeta 1985-03-15 vs solicitud 1990-06-09.",
+        "¿La nacionalidad coincide? NO: La nacionalidad no coincide: tarjeta VEN vs solicitud COL ('Colombiana')."
+      ],
+      "regla_vigencia": "anio",
+      "validaciones": [
+        {
+          "id": "hoja_en_blanco",
+          "pregunta": "¿Es una hoja en blanco?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "El documento tiene contenido."
+        },
+        {
+          "id": "imagen_ilegible",
+          "pregunta": "¿La imagen es ilegible?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "Los datos esenciales se leyeron y la MRZ es legible."
+        },
+        {
+          "id": "es_forma_migratoria",
+          "pregunta": "¿Es una FM?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "Se identificó una tarjeta de residente del INM."
+        },
+        {
+          "id": "vigente",
+          "pregunta": "¿Está vigente?",
+          "resultado": "SI",
+          "ok": true,
+          "detalle": "Residencia permanente: la tarjeta no tiene fecha de vencimiento."
+        },
+        {
+          "id": "nombre_coincide",
+          "pregunta": "¿El nombre coincide?",
+          "resultado": "NO",
+          "ok": false,
+          "detalle": "El nombre no coincide. En la solicitud y no en la tarjeta: FERNANDA GOMEZ MARIA PEREZ. En la tarjeta y no en la solicitud: JOSE LUIS RAMIREZ."
+        },
+        {
+          "id": "curp_coincide",
+          "pregunta": "¿La CURP coincide?",
+          "resultado": "NO_APLICA",
+          "ok": true,
+          "detalle": "La tarjeta no trae CURP legible."
+        },
+        {
+          "id": "fecha_nacimiento_coincide",
+          "pregunta": "¿La fecha de nacimiento coincide?",
+          "resultado": "NO",
+          "ok": false,
+          "detalle": "La fecha de nacimiento no coincide: tarjeta 1985-03-15 vs solicitud 1990-06-09."
+        },
+        {
+          "id": "nacionalidad_coincide",
+          "pregunta": "¿La nacionalidad coincide?",
+          "resultado": "NO",
+          "ok": false,
+          "detalle": "La nacionalidad no coincide: tarjeta VEN vs solicitud COL ('Colombiana')."
+        }
+      ]
+    }
+  },
+  "220": {
+    "codigo": 220,
+    "estado": "NO_ES_FORMA_MIGRATORIA",
+    "mensaje": "El documento no trae una tarjeta de residente del INM (forma migratoria). No se extrajo ningún dato.",
+    "clasificacion": {
+      "categoria": "otro",
+      "confianza": null,
+      "caracteres_leidos": 607,
+      "otros_documentos": [
+        "ine"
+      ],
+      "motivo": "No se reconoció una tarjeta de residente del INM: sin MRZ válida, sin NUE y sin título de la tarjeta (otros documentos: ine)",
+      "documento_detectado": "ine"
+    },
+    "meta": {
+      "tiempo_total_ms": 18400,
+      "tiempos_ms": {
+        "render": 250,
+        "ocr_y_recorte": 5100
+      },
+      "paginas": 1,
+      "paginas_ignoradas": [
+        1
+      ],
+      "motor": "paddleocr+vlm",
+      "version_modelo": "qwen3-vl:8b-instruct",
+      "modelo_vlm": "qwen3-vl:8b-instruct",
+      "recorte_anverso": "ancla",
+      "recorte_reverso": "ancla"
+    },
+    "validacion_plan": {
+      "cumple": false,
+      "mensaje": "Revisar documento y motivo de rechazo",
+      "motivos_rechazo": [
+        "¿Es una FM? NO: El documento no es una tarjeta de residente del INM."
+      ],
+      "regla_vigencia": "anio",
+      "validaciones": [
+        {
+          "id": "hoja_en_blanco",
+          "pregunta": "¿Es una hoja en blanco?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "El documento tiene contenido."
+        },
+        {
+          "id": "imagen_ilegible",
+          "pregunta": "¿La imagen es ilegible?",
+          "resultado": "NO",
+          "ok": true,
+          "detalle": "Se leyó texto, pero el documento no es una forma migratoria."
+        },
+        {
+          "id": "es_forma_migratoria",
+          "pregunta": "¿Es una FM?",
+          "resultado": "NO",
+          "ok": false,
+          "detalle": "El documento no es una tarjeta de residente del INM."
+        },
+        {
+          "id": "vigente",
+          "pregunta": "¿Está vigente?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        },
+        {
+          "id": "nombre_coincide",
+          "pregunta": "¿El nombre coincide?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        },
+        {
+          "id": "curp_coincide",
+          "pregunta": "¿La CURP coincide?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        },
+        {
+          "id": "fecha_nacimiento_coincide",
+          "pregunta": "¿La fecha de nacimiento coincide?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        },
+        {
+          "id": "nacionalidad_coincide",
+          "pregunta": "¿La nacionalidad coincide?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        }
+      ]
+    }
+  },
+  "221": {
+    "codigo": 221,
+    "estado": "HOJA_EN_BLANCO",
+    "mensaje": "El documento viene en blanco o ilegible: no se leyó ningún texto.",
+    "clasificacion": {
+      "categoria": "hoja_en_blanco",
+      "confianza": null,
+      "caracteres_leidos": 3,
+      "motivo": "El documento está en blanco o no tiene texto legible"
+    },
+    "meta": {
+      "tiempo_total_ms": 18400,
+      "tiempos_ms": {
+        "render": 240,
+        "ocr_y_recorte": 2100
+      },
+      "paginas": 1,
+      "paginas_ignoradas": [
+        1
+      ],
+      "motor": "paddleocr+vlm",
+      "version_modelo": "qwen3-vl:8b-instruct",
+      "modelo_vlm": "qwen3-vl:8b-instruct",
+      "recorte_anverso": "ancla",
+      "recorte_reverso": "ancla"
+    },
+    "validacion_plan": {
+      "cumple": false,
+      "mensaje": "Revisar documento y motivo de rechazo",
+      "motivos_rechazo": [
+        "¿Es una hoja en blanco? SI: No se leyó texto en el documento.",
+        "¿La imagen es ilegible? SI: No se leyó texto en el documento.",
+        "¿Es una FM? NO: El documento no es una tarjeta de residente del INM."
+      ],
+      "regla_vigencia": "anio",
+      "validaciones": [
+        {
+          "id": "hoja_en_blanco",
+          "pregunta": "¿Es una hoja en blanco?",
+          "resultado": "SI",
+          "ok": false,
+          "detalle": "No se leyó texto en el documento."
+        },
+        {
+          "id": "imagen_ilegible",
+          "pregunta": "¿La imagen es ilegible?",
+          "resultado": "SI",
+          "ok": false,
+          "detalle": "No se leyó texto en el documento."
+        },
+        {
+          "id": "es_forma_migratoria",
+          "pregunta": "¿Es una FM?",
+          "resultado": "NO",
+          "ok": false,
+          "detalle": "El documento no es una tarjeta de residente del INM."
+        },
+        {
+          "id": "vigente",
+          "pregunta": "¿Está vigente?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        },
+        {
+          "id": "nombre_coincide",
+          "pregunta": "¿El nombre coincide?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        },
+        {
+          "id": "curp_coincide",
+          "pregunta": "¿La CURP coincide?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        },
+        {
+          "id": "fecha_nacimiento_coincide",
+          "pregunta": "¿La fecha de nacimiento coincide?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        },
+        {
+          "id": "nacionalidad_coincide",
+          "pregunta": "¿La nacionalidad coincide?",
+          "resultado": "NO_VERIFICADO",
+          "ok": false,
+          "detalle": "No aplica: el documento no es una forma migratoria."
+        }
+      ]
+    }
+  },
+  "plan_rechazo": {
+    "cumple": false,
+    "mensaje": "Revisar documento y motivo de rechazo",
+    "motivos_rechazo": [
+      "¿El nombre coincide? NO: El nombre no coincide. En la tarjeta y no en la solicitud: FERNANDA GOMEZ.",
+      "¿La fecha de nacimiento coincide? NO: La fecha de nacimiento no coincide: tarjeta 1990-06-09 vs solicitud 1991-06-09.",
+      "¿La nacionalidad coincide? NO: La nacionalidad no coincide: tarjeta COL vs solicitud VEN ('Venezolana')."
+    ],
+    "regla_vigencia": "anio",
+    "validaciones": [
+      {
+        "id": "hoja_en_blanco",
+        "pregunta": "¿Es una hoja en blanco?",
+        "resultado": "NO",
+        "ok": true,
+        "detalle": "El documento tiene contenido."
+      },
+      {
+        "id": "imagen_ilegible",
+        "pregunta": "¿La imagen es ilegible?",
+        "resultado": "NO",
+        "ok": true,
+        "detalle": "Los datos esenciales se leyeron y la MRZ es legible."
+      },
+      {
+        "id": "es_forma_migratoria",
+        "pregunta": "¿Es una FM?",
+        "resultado": "SI",
+        "ok": true,
+        "detalle": "Se identificó una tarjeta de residente del INM."
+      },
+      {
+        "id": "vigente",
+        "pregunta": "¿Está vigente?",
+        "resultado": "SI",
+        "ok": true,
+        "detalle": "Año de vigencia 2027 contra año actual 2026."
+      },
+      {
+        "id": "nombre_coincide",
+        "pregunta": "¿El nombre coincide?",
+        "resultado": "NO",
+        "ok": false,
+        "detalle": "El nombre no coincide. En la tarjeta y no en la solicitud: FERNANDA GOMEZ."
+      },
+      {
+        "id": "curp_coincide",
+        "pregunta": "¿La CURP coincide?",
+        "resultado": "SI",
+        "ok": true,
+        "detalle": "La CURP coincide con la captura."
+      },
+      {
+        "id": "fecha_nacimiento_coincide",
+        "pregunta": "¿La fecha de nacimiento coincide?",
+        "resultado": "NO",
+        "ok": false,
+        "detalle": "La fecha de nacimiento no coincide: tarjeta 1990-06-09 vs solicitud 1991-06-09."
+      },
+      {
+        "id": "nacionalidad_coincide",
+        "pregunta": "¿La nacionalidad coincide?",
+        "resultado": "NO",
+        "ok": false,
+        "detalle": "La nacionalidad no coincide: tarjeta COL vs solicitud VEN ('Venezolana')."
+      }
+    ]
+  },
+  "plan_sin_solicitud": {
+    "cumple": false,
+    "mensaje": "Revisar documento y motivo de rechazo",
+    "motivos_rechazo": [
+      "¿El nombre coincide? NO_VERIFICADO: No se envió el nombre de la solicitud.",
+      "¿La fecha de nacimiento coincide? NO_VERIFICADO: No se envió la fecha de nacimiento de la solicitud.",
+      "¿La nacionalidad coincide? NO_VERIFICADO: No se envió la nacionalidad de la solicitud.",
+      "No se enviaron datos de la solicitud: las validaciones de coincidencia no se pudieron realizar."
+    ],
+    "regla_vigencia": "anio",
+    "validaciones": [
+      {
+        "id": "hoja_en_blanco",
+        "pregunta": "¿Es una hoja en blanco?",
+        "resultado": "NO",
+        "ok": true,
+        "detalle": "El documento tiene contenido."
+      },
+      {
+        "id": "imagen_ilegible",
+        "pregunta": "¿La imagen es ilegible?",
+        "resultado": "NO",
+        "ok": true,
+        "detalle": "Los datos esenciales se leyeron y la MRZ es legible."
+      },
+      {
+        "id": "es_forma_migratoria",
+        "pregunta": "¿Es una FM?",
+        "resultado": "SI",
+        "ok": true,
+        "detalle": "Se identificó una tarjeta de residente del INM."
+      },
+      {
+        "id": "vigente",
+        "pregunta": "¿Está vigente?",
+        "resultado": "SI",
+        "ok": true,
+        "detalle": "Año de vigencia 2027 contra año actual 2026."
+      },
+      {
+        "id": "nombre_coincide",
+        "pregunta": "¿El nombre coincide?",
+        "resultado": "NO_VERIFICADO",
+        "ok": false,
+        "detalle": "No se envió el nombre de la solicitud."
+      },
+      {
+        "id": "curp_coincide",
+        "pregunta": "¿La CURP coincide?",
+        "resultado": "NO_APLICA",
+        "ok": true,
+        "detalle": "La solicitud no trae CURP."
+      },
+      {
+        "id": "fecha_nacimiento_coincide",
+        "pregunta": "¿La fecha de nacimiento coincide?",
+        "resultado": "NO_VERIFICADO",
+        "ok": false,
+        "detalle": "No se envió la fecha de nacimiento de la solicitud."
+      },
+      {
+        "id": "nacionalidad_coincide",
+        "pregunta": "¿La nacionalidad coincide?",
+        "resultado": "NO_VERIFICADO",
+        "ok": false,
+        "detalle": "No se envió la nacionalidad de la solicitud."
+      }
+    ]
+  },
+  "400": {
+    "codigo": 400,
+    "estado": "ARCHIVO_NO_SOPORTADO",
+    "mensaje": "expediente.jpg: tipo no soportado; se acepta PDF"
+  },
+  "401": {
+    "codigo": 401,
+    "estado": "NO_AUTORIZADO",
+    "mensaje": "API key inválida o ausente (header X-API-Key)."
+  },
+  "413": {
+    "codigo": 413,
+    "estado": "ARCHIVO_DEMASIADO_GRANDE",
+    "mensaje": "expediente.pdf: excede 25 MB"
+  },
+  "422": {
+    "codigo": 422,
+    "estado": "PETICION_INVALIDA",
+    "mensaje": "La petición no es válida. file: Field required"
+  },
+  "222": {
+    "codigo": 222,
+    "estado": "ARCHIVO_CORRUPTO",
+    "mensaje": "expediente.pdf: dice ser PDF pero su contenido es otra cosa"
+  },
+  "223": {
+    "codigo": 223,
+    "estado": "PDF_PROTEGIDO",
+    "mensaje": "El PDF está protegido con contraseña. Quítasela y vuelve a enviarlo."
+  },
+  "224": {
+    "codigo": 224,
+    "estado": "LIMITE_PAGINAS",
+    "mensaje": "El documento excede el máximo de páginas por llamada: envía sólo las de la tarjeta."
+  },
+  "500": {
+    "codigo": 500,
+    "estado": "ERROR_INTERNO",
+    "mensaje": "Error interno. Repórtalo."
+  },
+  "502": {
+    "codigo": 502,
+    "estado": "ERROR_MODELO_VISION",
+    "mensaje": "El modelo de visión no respondió o rechazó la petición. Intenta de nuevo. Detalle: El VLM no respondió correctamente"
+  }
+}
