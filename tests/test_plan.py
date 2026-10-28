@@ -124,3 +124,13 @@ def test_502_sin_validacion_plan():
     body = respuesta.con_plan(respuesta.construir(r), plan.Solicitud())
     assert body["codigo"] == 502 and body["estado"] == "ERROR_MODELO_VISION" and "validacion_plan" not in body
     assert respuesta.http_status(502) == 502
+
+
+def test_fecha_expedicion_del_reverso_no_es_aviso():
+    """La nota de origen de la fecha de expedición es informativa: no debe convertir un 200 en 211."""
+    r = ResultadoFM(estado="ok", datos=DatosFM(tipo_documento="RESIDENTE PERMANENTE", nue="0000001234567",
+                                                nombre=Nombre(apellidos="PEREZ", nombres="ANA"),
+                                                fecha_nacimiento="1990-06-09", numero_documento="12345678"),
+                    advertencias=["fecha_expedicion tomada de 'Expedido en' del reverso"],
+                    meta=Meta(tiempo_total_ms=1, paginas=1, categoria="forma_migratoria"))
+    assert respuesta.avisos(r) == []

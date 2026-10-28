@@ -630,8 +630,7 @@
       ]
     },
     "avisos": [
-      "datos.curp: confianza baja (las lecturas no coinciden o no se pudo leer); revisar contra el original",
-      "fecha_expedicion tomada de 'Expedido en' del reverso"
+      "datos.curp: confianza baja (las lecturas no coinciden o no se pudo leer); revisar contra el original"
     ],
     "clasificacion": {
       "categoria": "forma_migratoria",

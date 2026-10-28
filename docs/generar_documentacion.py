@@ -514,8 +514,8 @@ st.append(P("Comprobaciones que realiza la API: dígitos de control de la MRZ ·
 st.append(H2("5.4 avisos, clasificacion, confianza y meta"))
 st += tabla(["Bloque", "Contenido"], [
     ("avisos", "Lista de textos con puntos que conviene revisar a mano, aunque no sean contradicciones: un dato del anverso "
-               "se leyó distinto y se entregó el de la MRZ, un campo con confianza baja, la fecha de expedición se tomó del "
-               "reverso... <b>Si no está vacía, el código es 211.</b>"),
+               "se leyó distinto y se entregó el de la MRZ, un campo con confianza baja, el nombre se corrigió con la "
+               "MRZ... <b>Si no está vacía, el código es 211.</b>"),
     ("clasificacion", "categoria: forma_migratoria · otro · hoja_en_blanco. caracteres_leidos: cantidad de texto detectado. "
                       "senales: indicios de tarjeta INM que encontró el OCR. otros_documentos: otros documentos vistos en el "
                       "PDF (pasaporte, ine...). motivo y documento_detectado: solo en 220/221. confianza: siempre null."),
@@ -690,9 +690,9 @@ st.append(H2("8.3 Código 211: con avisos"))
 st.append(P("El número del reverso se leyó distinto, pero la MRZ lo respalda con su dígito de control: se entrega el de la MRZ."))
 st += code(js(parcial("211")), "211 PROCESADO_CON_AVISOS (extracto)")
 st.append(H2("8.4 Tarjeta permanente antigua: 211"))
-st.append(P("Permanente antigua sin CURP legible y sin fecha en la MRZ: la comprobación de la CURP queda en sin_verificar, la "
-            "fecha de expedición se toma de «Expedido en» del reverso y ambos puntos se reportan en avisos. No hay "
-            "fecha_vencimiento."))
+st.append(P("Permanente antigua sin CURP legible y sin fecha en la MRZ: la comprobación de la CURP queda en sin_verificar y "
+            "se reporta como aviso (confianza baja). La fecha de expedición se toma de «Expedido en» del reverso, donde está "
+            "impresa; eso no genera aviso. No hay fecha_vencimiento."))
 bp = EJ["permanente"]
 st += code(js({k: bp[k] for k in ("codigo", "estado", "mensaje", "datos", "validacion", "avisos")}), "211 permanente antigua (extracto)")
 st.append(H2("8.5 Código 220 y 221: sin datos"))

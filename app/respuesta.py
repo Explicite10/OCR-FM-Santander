@@ -223,7 +223,9 @@ def validacion(r: ResultadoFM) -> dict:
     }
 
 
-_INFO = ("Localizador:", "El localizador no vio", "VLM deshabilitado")
+# Notas internas: explican de dónde salió un dato, pero no piden revisión humana (no convierten un 200 en 211).
+# La fecha de expedición tomada de «Expedido en» está impresa en el reverso de las tarjetas antiguas: es el dato real.
+_INFO = ("Localizador:", "El localizador no vio", "VLM deshabilitado", "fecha_expedicion tomada de")
 
 
 def avisos(r: ResultadoFM) -> list[str]:
