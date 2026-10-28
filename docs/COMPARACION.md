@@ -71,3 +71,20 @@ Tiempos: OpenSource mediana 14.6 s (p90 40 s); DocumentAI 9.2 s (p90 12 s).
 
 Mejoras aplicadas a partir de esto: `impreso_en` y `fecha_expedicion` también desde el OCR, nombres corregidos con
 la MRZ íntegra (ortografía y orden apellidos/nombres), NUE con patrón `000000` + 7 dígitos.
+
+## Resultado contra 50 documentos leídos a mano (27-oct-2026)
+
+Etiquetas hechas a mano sobre los primeros 50 PDFs del lote (3 son INE sin tarjeta; las dos APIs los rechazan
+con 220). Calificación con `scripts/medir_json_vs_humano.py` del proyecto DocumentAI, mismas reglas para ambas.
+
+| Versión | Precisión global (14 campos) | Documentos 100 % correctos |
+|---|---:|---:|
+| OpenSource antes (v1) | 92.8 % | 12.8 % |
+| OpenSource después (v4, commits hasta 4639bff) | **98.9 %** | 85.1 % |
+| DocumentAI antes | 94.1 % | 48.9 % |
+| DocumentAI después (respaldos desde texto) | **98.0 %** | 85.1 % |
+
+Errores que quedan en OpenSource v4: 4 lugares de impresión (el VLM no leyó el reverso y el OCR no encontró la
+línea), 2 nombres (MRZ truncada "BEATRI", VLM "SALLEN"/MRZ "SAILEN" sin OCR que desempate) y 1 apellido (MRZ
+"ARANGC" mal leída). En DocumentAI: NUE con un dígito distinto (2), CURP (3), sexo vacío (2) y un documento
+antiguo sin MRZ localizable.
