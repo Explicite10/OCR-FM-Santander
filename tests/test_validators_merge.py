@@ -64,3 +64,11 @@ def test_nue_plausible_y_fecha_expedicion_ocr():
     of = FrontOcr(tipo_documento="RESIDENTE PERMANENTE", nue="0000001234567", fechas=["1990-03-15", "2014-01-31"])
     d = Merger(vf, None, of, FrontOcr(), mrz).run()
     assert d.fecha_expedicion == "2014-01-31"
+
+
+def test_limpiar_lugar():
+    assert v.limpiar_lugar("MPRESO EN SRF COZUMEL, 25/10/2023") == "SRF COZUMEL, 25/10/2023"
+    assert v.limpiar_lugar("IMPRASA CN OR PUEBLA, 20/01/2026") == "OR PUEBLA, 20/01/2026"
+    assert v.limpiar_lugar("Expedido en: Delegación Federal en Distrito Federal, 12/09/2017") == "Delegación Federal en Distrito Federal, 12/09/2017"
+    assert v.limpiar_lugar("Al PUERTO ESCONDIDO") == "AI PUERTO ESCONDIDO"
+    assert v.limpiar_lugar("OR CIUDAD DE MEXICO, 15/01/2025") == "OR CIUDAD DE MEXICO, 15/01/2025"

@@ -464,7 +464,7 @@ class Merger:
             if seg_v and seg_o and seg_v != seg_o:
                 self.conf["numero_segob_inm"] = "baja"
         # "Impreso en": el VLM sólo lee el reverso cuando hace falta; el OCR lo trae casi siempre
-        d.impreso_en = self._v("impreso_en", self.vb) or self.ob.impreso_en
+        d.impreso_en = v.limpiar_lugar(self._v("impreso_en", self.vb) or self.ob.impreso_en)
         d.condicion_estancia = self._v("condicion_estancia", self.vb)
         if not d.fecha_expedicion and d.impreso_en:
             # Tarjetas antiguas: el anverso no imprime la expedición; va en "Expedido en: <oficina>, DD/MM/AAAA"

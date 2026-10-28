@@ -252,3 +252,24 @@ def nationality_iso(printed: str | None) -> str | None:
     if re.fullmatch(r"[A-Z]{3}", t):
         return t
     return GENTILICIO_ISO.get(t) or GENTILICIO_ISO.get(t.split()[0] if t.split() else "")
+
+
+# Oficinas del INM que encabezan "Impreso en" / "Expedido en": OR (Oficina de Representación), SRF (Subrepresentación
+# Federal), RL (Representación Local), AI (Aeropuerto Internacional), Delegación Federal/Local, Oficina de Representación
+_OFICINA_RE = re.compile(r"((?:OR|SRF|RL|AI|SR|OF)\s+[A-Z]|DELEGACION|O?FICINAS?\s+DE|SUB\s*REPRESENTACION|REPRESENTACION\s+)")
+
+
+def limpiar_lugar(s: str | None) -> str | None:
+    """Quita la etiqueta ("Impreso en:", "!mpre50 en", "IMPRASA CN") que el OCR o el VLM pegan antes de la oficina
+    y la fecha que va después de la coma. 'MPRESO EN SRF COZUMEL, 25/10/2023' -> 'SRF COZUMEL, 25/10/2023'."""
+    if not s:
+        return None
+    up = strip_accents(s.upper())
+    up = re.sub(r"^\s*AL\s+(?=[A-Z])", "AI ", up)  # "Al PUERTO ESCONDIDO": la I se lee como l
+    m = _OFICINA_RE.search(up)
+    if m and m.start() > 0:
+        s = s[m.start():]
+    s = re.sub(r"^\s*(EXPEDIDO|IMPRESO)\s*EN\s*:?\s*", "", s, flags=re.IGNORECASE)
+    s = re.sub(r"^\s*A[Ll]\s+(?=[A-Z])", "AI ", s)
+    s = re.sub(r"^\s*FICINA", "OFICINA", s, flags=re.IGNORECASE)  # "Oficina" sin la O inicial
+    return re.sub(r"\s+", " ", s).strip(" ,:-") or None

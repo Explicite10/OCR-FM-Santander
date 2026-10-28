@@ -119,6 +119,7 @@ _PAISES: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "AUS": (("AUSTRALIA",), ("AUSTRALIAN",)), "NZL": (("NUEVA ZELANDA",), ("NEOZELANDES",)),
     "ZAF": (("SUDAFRICA",), ("SUDAFRICAN",)), "NGA": (("NIGERIA",), ("NIGERIAN",)), "EGY": (("EGIPTO",), ("EGIPCI",)),
     "MAR": (("MARRUECOS",), ("MARROQU",)), "IRN": (("IRAN",), ("IRANI",)), "PAK": (("PAKISTAN",), ("PAKISTANI",)),
+    "SEN": (("SENEGAL",), ("SENEGALES",)), "COD": (("REPUBLICA DEMOCRATICA DEL CONGO", "CONGO"), ("CONGOLEN",)),
 }
 _POR_CODIGO_ISO2 = {"AR": "ARG", "BO": "BOL", "BR": "BRA", "CL": "CHL", "CO": "COL", "CR": "CRI", "CU": "CUB",
                     "DO": "DOM", "EC": "ECU", "SV": "SLV", "GT": "GTM", "HN": "HND", "HT": "HTI", "MX": "MEX",
