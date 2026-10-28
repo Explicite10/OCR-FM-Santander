@@ -64,3 +64,23 @@ def test_nombre_corregido_con_mrz():
     assert r("JIMENEZ GONZALEZ", "MARIA DEL CARMEN", "JIMENEZ GONZALEZ", "MARIA DEL CARM",
              "JIMENEZ<GONZALEZ<<MARIA<DEL<CARM") == ("JIMENEZ GONZALEZ", "MARIA DEL CARMEN")
     assert r("PEREZ LOPEZ", "ANA MARIA", "PEREZ LOPEZ", "ANA MARIA", "PEREZ<LOPEZ<<ANA<MARIA<<<<<<<<") == ("PEREZ LOPEZ", "ANA MARIA")
+
+
+def test_ocr_desempata_mrz_mal_leida():
+    """MRZ con una letra mal leída (ARANGC): el renglón del OCR respalda al VLM (datos ficticios)."""
+    from app.merge import reconcile_with_mrz as r
+    assert r("ARANGO", "MAGDA CATALINA", "ARANGC", "MAGDA CATALINA", "ARANGC<<MAGDA<CATALINA<<<<<<<<",
+             "ARANGO Magda Catalina") == ("ARANGO", "MAGDA CATALINA")
+    # sin OCR que respalde, manda la MRZ
+    assert r("ARANGO", "MAGDA CATALINA", "ARANGC", "MAGDA CATALINA", "ARANGC<<MAGDA<CATALINA<<<<<<<<") == ("ARANGC", "MAGDA CATALINA")
+
+
+def test_impreso_en_ocr_deformado():
+    from app.front_ocr import extract
+    from app.ocr import Line
+    r = extract([Line("SEGOB-INM-00945782", 0.9, 0, 0, 300, 20), Line("r050 : OR CIUDAD DE MEXICO, 15/01/2025", 0.9, 0, 30, 400, 50)])
+    assert r.impreso_en == "OR CIUDAD DE MEXICO, 15/01/2025"
+    r = extract([Line("!mpre50 en: OR CIUDAD DE MEXICO, 13/10/2025", 0.9, 0, 30, 400, 50)])
+    assert r.impreso_en == "OR CIUDAD DE MEXICO, 13/10/2025"
+    r = extract([Line("Expedido en: Delegación Federal en Distrito Federal, 27/02/2019", 0.9, 0, 30, 400, 50)])
+    assert r.impreso_en == "DELEGACION FEDERAL EN DISTRITO FEDERAL, 27/02/2019"

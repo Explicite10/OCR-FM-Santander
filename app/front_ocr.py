@@ -56,13 +56,20 @@ def extract(lines: list[Line]) -> FrontOcr:
             seg = "SEGOB-INM-" + re.sub(r"\D", "", m.group(1))
             if SEGOB_RE.match(seg):
                 res.numero_segob_inm = seg
-        m = re.search(r"IMPRESO\s*EN\s*:?\s*(.+)$", strip_accents(l.text.upper()))
+        up = strip_accents(l.text.upper())
+        m = re.search(r"(?:IMPRESO|EXPEDIDO)\s*EN\s*:?\s*(.+)$", up)
         if m and res.impreso_en is None:
             rest = m.group(1).strip(" :-")
             if len(rest) < 4 and i + 1 < len(lines):  # "Impreso en:" solo y el valor en la línea siguiente
                 rest = strip_accents(lines[i + 1].text.upper()).strip()
             if len(rest) >= 4:
                 res.impreso_en = re.sub(r"\s+", " ", rest)
+        elif res.impreso_en is None:
+            # La etiqueta "Impreso en:" va en gris chico y el OCR la deforma ("!mpre50 en:", "r050 :"); el valor
+            # sí se lee: oficina en mayúsculas seguida de ", DD/MM/AAAA".
+            m = re.search(r"([A-Z][A-Z .]{2,45},\s*\d{2}/\d{2}/\d{4})\s*$", up)
+            if m and not m.group(1).startswith(("SEGOB", "NO ")):
+                res.impreso_en = re.sub(r"\s+", " ", m.group(1).strip())
         m = re.fullmatch(r"NO\.?(\d{7,9})", n)
         if m and res.numero_documento is None:
             res.numero_documento = m.group(1)

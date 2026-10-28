@@ -45,7 +45,7 @@ def split_printed_name(printed: str | None) -> tuple[str | None, str | None]:
     return " ".join(words[:i]).upper(), " ".join(words[i:]).upper()
 
 
-def _fix_words(front: list[str], mrz: list[str], truncada: bool = False) -> list[str]:
+def _fix_words(front: list[str], mrz: list[str], truncada: bool = False, ocr_words: set[str] | None = None) -> list[str]:
     """Palabras del anverso corregidas con las de la MRZ: la palabra de la MRZ sustituye a la del anverso
     que se le parece (la MRZ puede truncar la última palabra: ahí se conserva el anverso si lo prolonga)."""
     out: list[str] = []
@@ -63,6 +63,8 @@ def _fix_words(front: list[str], mrz: list[str], truncada: bool = False) -> list
             f = front[best]
             if len(f) > len(w) and (f.startswith(w) or (truncada and i == len(mrz) - 1)):
                 out.append(w + f[len(w):])  # MRZ truncada: la cola la pone el anverso (BEATRI + Z)
+            elif f != w and ocr_words and f in ocr_words and w not in ocr_words:
+                out.append(f)  # el OCR del anverso respalda la lectura del VLM: la MRZ se leyó mal (ARANGC)
             else:
                 out.append(w)
         else:
@@ -72,20 +74,22 @@ def _fix_words(front: list[str], mrz: list[str], truncada: bool = False) -> list
 
 
 def reconcile_with_mrz(apellidos: str | None, nombres: str | None, m_ap: str | None, m_no: str | None,
-                       linea3: str) -> tuple[str | None, str | None]:
+                       linea3: str, ocr_linea: str | None = None) -> tuple[str | None, str | None]:
     """Apellidos/nombres definitivos usando la MRZ como referencia de ortografía y de separación
-    (el "<<" de la MRZ dice dónde terminan los apellidos; el anverso a veces los invierte)."""
+    (el "<<" de la MRZ dice dónde terminan los apellidos; el anverso a veces los invierte).
+    `ocr_linea` (renglón del nombre leído por PaddleOCR) desempata cuando VLM y MRZ difieren en una palabra."""
     if not m_ap:
         return apellidos, nombres
     front_all = (v.norm_text(apellidos) + " " + v.norm_text(nombres)).split()
     ap_words, no_words = m_ap.split(), (m_no or "").split()
     truncada = bool(linea3) and not linea3.endswith("<")
+    ocr_words = set(v.norm_text(ocr_linea).split()) if ocr_linea else None
     if truncada and not no_words:
         # Sólo cabe el apellido: se corrige el apellido y los nombres quedan como en el anverso
-        ap_fixed = _fix_words(front_all[:len(ap_words)], ap_words)
+        ap_fixed = _fix_words(front_all[:len(ap_words)], ap_words, ocr_words=ocr_words)
         rest = [w for w in front_all if w not in ap_fixed]
         return " ".join(ap_fixed) or apellidos, " ".join(rest) or nombres
-    fixed = _fix_words(front_all, ap_words + no_words, truncada)
+    fixed = _fix_words(front_all, ap_words + no_words, truncada, ocr_words)
     k = len(ap_words)
     return " ".join(fixed[:k]) or apellidos, " ".join(fixed[k:]) or nombres
 
@@ -204,7 +208,9 @@ class Merger:
             if ok or corregible:
                 self.conf["nombre"] = "alta"
                 if self.mrz is not None and self.mrz.valido:
-                    ap_m, no_m = reconcile_with_mrz(n.apellidos, n.nombres, m_ap, m_no, self.mrz.lineas[2] if len(self.mrz.lineas) > 2 else "")
+                    ap_m, no_m = reconcile_with_mrz(n.apellidos, n.nombres, m_ap, m_no,
+                                                    self.mrz.lineas[2] if len(self.mrz.lineas) > 2 else "",
+                                                    self.of.nombre_linea)
                     if (ap_m, no_m) != (n.apellidos, n.nombres):
                         if corregible:
                             self.warnings.append(f"Nombre corregido con la MRZ: anverso '{full_front}' -> '{ap_m} {no_m}'")
@@ -460,6 +466,13 @@ class Merger:
         # "Impreso en": el VLM sólo lee el reverso cuando hace falta; el OCR lo trae casi siempre
         d.impreso_en = self._v("impreso_en", self.vb) or self.ob.impreso_en
         d.condicion_estancia = self._v("condicion_estancia", self.vb)
+        if not d.fecha_expedicion and d.impreso_en:
+            # Tarjetas antiguas: el anverso no imprime la expedición; va en "Expedido en: <oficina>, DD/MM/AAAA"
+            fe = v.parse_date(d.impreso_en)
+            if fe and 2000 <= fe.year <= date.today().year:
+                d.fecha_expedicion = _iso(fe)
+                self.conf["fecha_expedicion"] = "media"
+                self.warnings.append("fecha_expedicion tomada de 'Expedido en' del reverso")
         if self.mrz:
             for c in self.mrz.checks:
                 self._check(c.nombre, c.valido, "corregido con el dígito verificador" if c.corregido else None)
